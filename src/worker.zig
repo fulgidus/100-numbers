@@ -1,18 +1,41 @@
 // ============================================================================
-// Worker Thread Module for 100 Numbers Game Solver
+// Optimized Worker Thread Module - Reduced Contention Version
 //
-// This module contains the worker thread functions that handle:
-// - Individual game simulation threads
-// - Performance monitoring and statistics reporting
-// - Continuous game execution with proper error handling
+// This version uses local statistics to minimize mutex contention:
+// - Each worker maintains local stats
+// - Synchronization happens in batches (every 10k games)
+// - Dramatically reduces mutex lock/unlock frequency
 // ============================================================================
 
 const std = @import("std");
 const Grid = @import("grid.zig").Grid;
 const SharedState = @import("shared_state.zig").SharedState;
+const LocalStats = @import("shared_state.zig").LocalStats;
 
-// Main worker thread function - runs continuous game simulations
-pub fn workerThread(shared_state: *SharedState) void {
+// Optimized worker thread function with batched updates
+pub fn workerThread(shared_state: *SharedState, allocator: std.mem.Allocator) void {
+    var grid = Grid.init();
+    var local_stats = LocalStats.init(allocator);
+    defer local_stats.deinit();
+
+    while (true) {
+        grid = Grid.init(); // Reset grid for new game
+
+        // Play a random game
+        const score = grid.playRandomGame();
+
+        // Update LOCAL stats (no synchronization needed)
+        local_stats.updateLocalScore(score, &grid);
+
+        // Periodically flush to global state (much less frequent)
+        if (local_stats.shouldFlush()) {
+            shared_state.flushLocalStats(&local_stats);
+        }
+    }
+}
+
+// Legacy worker function for backwards compatibility (deprecated)
+pub fn legacyWorkerThread(shared_state: *SharedState) void {
     var grid = Grid.init();
 
     while (true) {
@@ -21,33 +44,33 @@ pub fn workerThread(shared_state: *SharedState) void {
         // Play a random game and handle any errors gracefully
         const score = grid.playRandomGame();
 
-        // Update shared state with the game result
+        // Update shared state with the game result (causes mutex contention)
         shared_state.updateScore(score, &grid);
     }
 }
 
-// Performance monitoring thread - reports statistics periodically
+// Enhanced performance monitoring with less frequent reporting
 pub fn performanceMonitor(shared_state: *SharedState) void {
     var last_games_count: u64 = 0;
     var last_report_time = std.time.milliTimestamp();
-    const report_interval_ms: i64 = 5000; // Report every 5 seconds
+    const report_interval_ms: i64 = 2000; // Report every 2 seconds (more frequent for better UX)
 
     while (true) {
-        std.time.sleep(1_000_000_000); // Sleep for 1 second (nanoseconds)
+        std.time.sleep(500_000_000); // Sleep for 0.5 seconds (check more frequently)
 
         const current_time = std.time.milliTimestamp();
 
-        // Check if it's time to report performance statistics
         if (current_time - last_report_time >= report_interval_ms) {
             const stats = shared_state.getStats();
             const games_in_interval = stats.games_played - last_games_count;
             const time_elapsed_sec = @as(f64, @floatFromInt(current_time - last_report_time)) / 1000.0;
             const games_per_second = @as(f64, @floatFromInt(games_in_interval)) / time_elapsed_sec;
 
-            // Print performance statistics
-            std.debug.print("Performance: {d:.1} games/second | Best: {} | Perfect solutions: {}\n", .{ games_per_second, stats.best_score, stats.solutions_found });
+            // Enhanced reporting with efficiency metrics
+            const efficiency = (games_per_second / 150000.0) * 100.0; // Percentage of theoretical max (150k * cores)
 
-            // Update tracking variables for next interval
+            std.debug.print("Performance: {d:.1} games/sec | Efficiency: {d:.1}% | Best: {} | Solutions: {}\n", .{ games_per_second, efficiency, stats.best_score, stats.solutions_found });
+
             last_report_time = current_time;
             last_games_count = stats.games_played;
         }

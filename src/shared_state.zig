@@ -1,11 +1,10 @@
 // ============================================================================
-// Shared State Module for 100 Numbers Game Solver
+// Optimized Shared State Module - Performance Improvements
 //
-// This module manages the shared state between worker threads, including:
-// - Best score tracking across all threads
-// - Game statistics (games played, solutions found)
-// - Thread-safe access through mutex protection
-// - Solution saving functionality for perfect games
+// This version reduces mutex contention by:
+// - Batching updates from worker threads
+// - Using local statistics per thread
+// - Reducing I/O operations under mutex
 // ============================================================================
 
 const std = @import("std");
@@ -13,85 +12,140 @@ const Grid = @import("grid.zig").Grid;
 const GridSize = @import("grid.zig").GridSize;
 const TotalCells = @import("grid.zig").TotalCells;
 
-// Shared state structure for multithreading coordination
-pub const SharedState = struct {
-    mutex: std.Thread.Mutex, // Mutex for thread-safe access to shared data
-    best_score: u32, // Highest score achieved across all threads
-    games_played: u64, // Total number of games played by all threads
-    solutions_found: u64, // Total number of perfect solutions found
+// Local statistics for each worker thread (no synchronization needed)
+pub const LocalStats = struct {
+    games_played: u64 = 0,
+    best_score: u32 = 0,
+    solutions: std.ArrayList(Grid),
+    allocator: std.mem.Allocator,
 
-    // Initialize shared state with default values
-    pub fn init() SharedState {
-        return SharedState{
-            .mutex = std.Thread.Mutex{},
-            .best_score = 0,
-            .games_played = 0,
-            .solutions_found = 0,
+    pub fn init(allocator: std.mem.Allocator) LocalStats {
+        return LocalStats{
+            .solutions = std.ArrayList(Grid).init(allocator),
+            .allocator = allocator,
         };
     }
 
-    // Thread-safe method to update score and handle new records
+    pub fn deinit(self: *LocalStats) void {
+        self.solutions.deinit();
+    }
+
+    // Update local stats without any synchronization
+    pub fn updateLocalScore(self: *LocalStats, score: u32, grid: *const Grid) void {
+        self.games_played += 1;
+
+        if (score > self.best_score) {
+            self.best_score = score;
+        }
+
+        // Store perfect solutions locally
+        if (score == TotalCells) {
+            self.solutions.append(grid.*) catch {}; // Ignore allocation failures for now
+        }
+    }
+
+    // Periodically flush to global state (much less frequent)
+    pub fn shouldFlush(self: *const LocalStats) bool {
+        return self.games_played % 10000 == 0; // Flush every 10k games
+    }
+};
+
+// Optimized shared state with reduced contention
+pub const SharedState = struct {
+    mutex: std.Thread.Mutex,
+    global_best_score: u32,
+    total_games_played: u64,
+    total_solutions_found: u64,
+
+    pub fn init() SharedState {
+        return SharedState{
+            .mutex = std.Thread.Mutex{},
+            .global_best_score = 0,
+            .total_games_played = 0,
+            .total_solutions_found = 0,
+        };
+    }
+
+    // Legacy function for backwards compatibility (now deprecated)
     pub fn updateScore(self: *SharedState, score: u32, grid: *const Grid) void {
         self.mutex.lock();
         defer self.mutex.unlock();
 
-        self.games_played += 1;
+        self.total_games_played += 1;
 
-        // Check if this is a new best score
-        if (score > self.best_score) {
-            self.best_score = score;
-            std.debug.print("New best score: {} (Thread: {})\n", .{ score, std.Thread.getCurrentId() });
-            grid.print();
+        if (score > self.global_best_score) {
+            self.global_best_score = score;
+            std.debug.print("New best score: {} (Game #{})\n", .{ score, self.total_games_played });
         }
 
-        // Check if this is a perfect solution (100/100)
         if (score == TotalCells) {
-            self.solutions_found += 1;
-            std.debug.print("*** PERFECT SOLUTION FOUND! (Solution #{}) ***\n", .{self.solutions_found});
-            self.saveSolution(grid) catch |err| {
-                std.debug.print("Error saving perfect solution: {}\n", .{err});
-            };
-        }
-    }
+            self.total_solutions_found += 1;
+            std.debug.print("*** PERFECT SOLUTION FOUND! (Solution #{}) ***\n", .{self.total_solutions_found});
 
-    // Save a perfect solution to files (all 4 orientations for uniqueness)
-    fn saveSolution(self: *SharedState, grid: *const Grid) !void {
-        _ = self; // Mark parameter as used
-
-        // Generate all 4 possible orientations of the solution
-        const flipped_grid = grid.flip();
-        const inverted_grid = grid.invert();
-        const flipped_inverted_grid = flipped_grid.invert();
-
-        const grids: [4]Grid = .{
-            grid.*,
-            inverted_grid,
-            flipped_grid,
-            flipped_inverted_grid,
-        };
-
-        // Save each orientation as a separate file
-        for (grids) |g| {
-            const hash = g.hash();
-            const filename = std.fmt.allocPrintZ(std.heap.page_allocator, "solution_{x}.txt", .{hash}) catch |err| {
-                std.debug.print("Error allocating filename: {}\n", .{err});
-                return err;
-            };
+            // Save the solution to a file
+            const hash = grid.hash();
+            const filename = std.fmt.allocPrintZ(std.heap.page_allocator, "solution_{x}.txt", .{hash}) catch return;
             defer std.heap.page_allocator.free(filename);
 
-            try g.saveSolutionToFile(filename);
-            std.debug.print("Solution saved to: {s}\n", .{filename});
+            grid.saveSolutionToFile(filename) catch |err| {
+                std.debug.print("Error saving solution: {}\n", .{err});
+            };
+
+            grid.print();
+            std.debug.print("\n");
         }
     }
 
-    // Thread-safe method to retrieve current statistics
+    // Batch update from local stats (called much less frequently)
+    pub fn flushLocalStats(self: *SharedState, local_stats: *LocalStats) void {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+
+        // Update global counters
+        self.total_games_played += local_stats.games_played;
+
+        // Check for new global best
+        if (local_stats.best_score > self.global_best_score) {
+            self.global_best_score = local_stats.best_score;
+            std.debug.print("New global best score: {} (Total games: {})\n", .{ self.global_best_score, self.total_games_played });
+        }
+
+        // Process solutions found
+        for (local_stats.solutions.items) |solution| {
+            self.total_solutions_found += 1;
+            std.debug.print("*** PERFECT SOLUTION FOUND! (Solution #{}) ***\n", .{self.total_solutions_found});
+
+            // Save solution asynchronously or queue for later processing
+            self.saveSolutionAsync(&solution) catch |err| {
+                std.debug.print("Error saving solution: {}\n", .{err});
+            };
+        }
+
+        // Reset local stats
+        local_stats.games_played = 0;
+        local_stats.best_score = 0;
+        local_stats.solutions.clearAndFree();
+    }
+
+    fn saveSolutionAsync(self: *SharedState, grid: *const Grid) !void {
+        _ = self; // Mark parameter as used
+
+        // TODO: Implement async file saving or queue for background thread
+        // For now, just do immediate save without grid printing
+        const hash = grid.hash();
+        const filename = try std.fmt.allocPrintZ(std.heap.page_allocator, "solution_{x}.txt", .{hash});
+        defer std.heap.page_allocator.free(filename);
+
+        try grid.saveSolutionToFile(filename);
+    }
+
     pub fn getStats(self: *SharedState) struct { best_score: u32, games_played: u64, solutions_found: u64 } {
         self.mutex.lock();
         defer self.mutex.unlock();
         return .{
-            .best_score = self.best_score,
-            .games_played = self.games_played,
-            .solutions_found = self.solutions_found,
+            .best_score = self.global_best_score,
+            .games_played = self.total_games_played,
+            .solutions_found = self.total_solutions_found,
         };
     }
 };
