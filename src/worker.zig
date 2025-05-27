@@ -55,6 +55,11 @@ pub fn performanceMonitor(shared_state: *SharedState) void {
     var last_report_time = std.time.milliTimestamp();
     const report_interval_ms: i64 = 2000; // Report every 2 seconds (more frequent for better UX)
 
+    // Get CPU count for efficiency calculation
+    // const cpu_count = std.Thread.getCpuCount() catch 4;
+    const unoptimized_baseline = 1900000.0; // 1.9M games/sec from unoptimized version
+    // const expected_per_core = unoptimized_baseline / @as(f64, @floatFromInt(cpu_count));
+
     while (true) {
         std.time.sleep(500_000_000); // Sleep for 0.5 seconds (check more frequently)
 
@@ -66,10 +71,10 @@ pub fn performanceMonitor(shared_state: *SharedState) void {
             const time_elapsed_sec = @as(f64, @floatFromInt(current_time - last_report_time)) / 1000.0;
             const games_per_second = @as(f64, @floatFromInt(games_in_interval)) / time_elapsed_sec;
 
-            // Enhanced reporting with efficiency metrics
-            const efficiency = (games_per_second / 150000.0) * 100.0; // Percentage of theoretical max (150k * cores)
+            // Calculate efficiency against unoptimized baseline
+            const efficiency = (games_per_second / unoptimized_baseline) * 100.0;
 
-            std.debug.print("Performance: {d:.1} games/sec | Efficiency: {d:.1}% | Best: {} | Solutions: {}\n", .{ games_per_second, efficiency, stats.best_score, stats.solutions_found });
+            std.debug.print("Performance: {d:.1} games/sec | Efficiency: {d:.1}% vs unoptimized | Best: {} | Solutions: {}\n", .{ games_per_second, efficiency, stats.best_score, stats.solutions_found });
 
             last_report_time = current_time;
             last_games_count = stats.games_played;
