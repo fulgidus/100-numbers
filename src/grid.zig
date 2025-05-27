@@ -78,7 +78,7 @@ pub const Grid = struct { // Defines a structure to represent the game grid.
         self.fillCell(chosen_move.x, chosen_move.y); // Fill the chosen cell with next number.
     }
 
-    pub fn playRandomGame(self: *Grid) !u32 { // Defines a public function to play a full game with random moves.
+    pub fn playRandomGame(self: *Grid) u32 { // Defines a public function to play a full game with random moves.
         // Start from a random cell
         const start_x = @as(i32, @intCast(std.crypto.random.int(u32) % GridSize)); // Generate random starting x-coordinate.
         const start_y = @as(i32, @intCast(std.crypto.random.int(u32) % GridSize)); // Generate random starting y-coordinate.
@@ -88,7 +88,7 @@ pub const Grid = struct { // Defines a structure to represent the game grid.
                 error.NoValidMoves => { // If no valid moves are available.
                     return self.filled; // Exit the function early.
                 },
-                else => return err, // Propagate other errors.
+                else => unreachable, // Handle any other errors as unreachable.
             };
         }
         return self.filled; // Return the total number of filled cells when the game ends.

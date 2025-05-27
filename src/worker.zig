@@ -19,12 +19,7 @@ pub fn workerThread(shared_state: *SharedState) void {
         grid = Grid.init(); // Reset grid for new game
 
         // Play a random game and handle any errors gracefully
-        const score = grid.playRandomGame() catch |err| switch (err) {
-            else => {
-                // Continue on error - don't spam console with error messages
-                continue;
-            },
-        };
+        const score = grid.playRandomGame();
 
         // Update shared state with the game result
         shared_state.updateScore(score, &grid);
