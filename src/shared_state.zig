@@ -126,17 +126,33 @@ pub const SharedState = struct {
         local_stats.best_score = 0;
         local_stats.solutions.clearAndFree();
     }
-
     fn saveSolutionAsync(self: *SharedState, grid: *const Grid) !void {
         _ = self; // Mark parameter as used
 
-        // TODO: Implement async file saving or queue for background thread
-        // For now, just do immediate save without grid printing
-        const hash = grid.hash();
-        const filename = try std.fmt.allocPrintZ(std.heap.page_allocator, "solution_{x}.txt", .{hash});
-        defer std.heap.page_allocator.free(filename);
+        // Generate all 4 possible orientations of the solution
+        const flipped_grid = grid.flip();
+        const inverted_grid = grid.invert();
+        const flipped_inverted_grid = flipped_grid.invert();
 
-        try grid.saveSolutionToFile(filename);
+        const grids: [4]Grid = .{
+            grid.*,
+            inverted_grid,
+            flipped_grid,
+            flipped_inverted_grid,
+        };
+
+        // Save each orientation as a separate file
+        for (grids) |g| {
+            const hash = g.hash();
+            const filename = std.fmt.allocPrintZ(std.heap.page_allocator, "solution_{x}.txt", .{hash}) catch |err| {
+                std.debug.print("Error allocating filename: {}\n", .{err});
+                return err;
+            };
+            defer std.heap.page_allocator.free(filename);
+
+            try g.saveSolutionToFile(filename);
+            std.debug.print("Solution saved to: {s}\n", .{filename});
+        }
     }
 
     pub fn getStats(self: *SharedState) struct { best_score: u32, games_played: u64, solutions_found: u64 } {
