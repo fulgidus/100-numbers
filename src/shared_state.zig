@@ -107,7 +107,7 @@ pub const SharedState = struct {
         // Check for new global best
         if (local_stats.best_score > self.global_best_score) {
             self.global_best_score = local_stats.best_score;
-            std.debug.print("New global best score: {} (Total games: {})\n", .{ self.global_best_score, self.total_games_played });
+            std.debug.print("New global best score: {}\n", .{self.global_best_score});
         }
 
         // Process solutions found
