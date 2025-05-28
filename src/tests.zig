@@ -1,14 +1,14 @@
 // ============================================================================
-// Test Suite per 100 Numbers Game Solver - Priorità Alta
+// Test Suite for 100 Numbers Game Solver - High Priority
 //
-// Questo modulo contiene test completi per le funzioni critiche identificate
-// nell'analisi di robustezza del sistema:
+// This module contains comprehensive tests for critical functions identified
+// in the system robustness analysis:
 //
-// PRIORITÀ ALTA:
-// 1. grid.zig - Funzioni di validazione e stato della griglia
-// 2. shared_state.zig - Gestione thread-safe
-// 3. worker.zig - Esecuzione parallela
-// 4. Gestione memoria e errori
+// HIGH PRIORITY:
+// 1. grid.zig - Grid validation and state functions
+// 2. shared_state.zig - Thread-safe management
+// 3. worker.zig - Parallel execution
+// 4. Memory and error management
 // ============================================================================
 
 const std = @import("std");
@@ -25,7 +25,7 @@ const SharedState = @import("shared_state.zig").SharedState;
 const LocalStats = @import("shared_state.zig").LocalStats;
 
 // ============================================================================
-// TEST PRIORITÀ ALTA #1: FUNZIONI DI VALIDAZIONE GRIGLIA
+// HIGH PRIORITY TEST #1: GRID VALIDATION FUNCTIONS
 // ============================================================================
 
 test "Grid.isValidMove - bounds checking" {
@@ -663,11 +663,11 @@ test "Grid.hash - collision resistance" {
         }
 
         try hashes.append(hash);
-    }    // Con pattern diversificati, accettiamo un tasso di collisioni realistico
+    } // Con pattern diversificati, accettiamo un tasso di collisioni realistico
     // 20-25% di collisioni possono essere normali per pattern di griglia che
     // condividono strutture simili (es. righe, colonne, diagonali)
     try expect(collision_count <= 25);
-    
+
     // Verifica che abbiamo generato almeno 75 hash unici (75% di successo)
     // che è ragionevole per questo tipo di test
     try expect(hashes.items.len >= 75);
