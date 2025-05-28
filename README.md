@@ -3,8 +3,11 @@
 
 A high-performance multithreaded solver for the "100 Numbers Game" written in Zig, capable of finding perfect solutions to this challenging mathematical puzzle.
 
+[![CI/CD Pipeline](https://github.com/aless/100-numbers/actions/workflows/ci.yml/badge.svg)](https://github.com/aless/100-numbers/actions/workflows/ci.yml)
+[![Release](https://github.com/aless/100-numbers/actions/workflows/release.yml/badge.svg)](https://github.com/aless/100-numbers/actions/workflows/release.yml)
 [![Zig](https://img.shields.io/badge/Zig-0.14.1-orange.svg)](https://ziglang.org/download/)
 [![License](https://img.shields.io/badge/GPL-3.0-blue.svg)](https://opensource.org/licenses/GPL-3.0)
+[![Latest Release](https://img.shields.io/github/v/release/aless/100-numbers)](https://github.com/aless/100-numbers/releases/latest)
 
 ## 🎯 About the Game
 
@@ -223,6 +226,101 @@ zig build test-comprehensive
 
 # Stop with Ctrl+C
 ```
+
+## 🔄 CI/CD Pipeline & Automated Releases
+
+This project features a comprehensive CI/CD pipeline that ensures code quality and provides automated cross-platform releases.
+
+### 🧪 Continuous Integration
+
+The CI pipeline runs on every push and pull request:
+
+- **Multi-platform Testing**: Automated testing on Ubuntu, Windows, and macOS
+- **Comprehensive Test Suite**: Runs all 38 unit tests including thread safety and memory validation
+- **Build Verification**: Validates both debug and optimized builds
+- **Cross-compilation**: Ensures builds work correctly for all target platforms
+
+### 🚀 Automated Releases
+
+**Daily Releases**: Automatic releases are created daily from the main branch with the format `vYYYY.MM.DD-commit`
+
+**Manual Releases**: Tagged releases can be created by pushing a version tag (e.g., `git tag v1.0.0 && git push origin v1.0.0`)
+
+### 📦 Available Binaries
+
+Each release includes optimized binaries for:
+
+- **Windows x64** (`100-numbers-windows-x86_64.exe`)
+- **Linux x64** (`100-numbers-linux-x86_64`)
+- **Linux ARM64** (`100-numbers-linux-aarch64`) 
+- **macOS Intel** (`100-numbers-macos-x86_64`)
+- **macOS Apple Silicon** (`100-numbers-macos-aarch64`)
+
+### 🔧 Pipeline Features
+
+- **Zero-dependency Builds**: Self-contained executables with no external dependencies
+- **Optimized Performance**: All releases built with `-Doptimize=ReleaseFast`
+- **Compressed Archives**: Automatic `.tar.gz` (Unix) and `.zip` (Windows) packaging
+- **Release Notes**: Auto-generated with commit information and usage instructions
+- **Artifact Retention**: Build artifacts kept for 90 days
+
+### 📋 Quality Gates
+
+All releases must pass:
+- ✅ Full test suite (38 tests across all platforms)
+- ✅ Cross-compilation verification
+- ✅ Memory safety validation
+- ✅ Thread safety testing
+- ✅ Performance regression checks
+
+### 🛠️ Local Cross-Platform Building
+
+For local development and testing, the project includes convenient build scripts that create binaries for all supported platforms:
+
+#### Windows (PowerShell)
+```powershell
+# Build all platforms with tests
+.\scripts\build-all-clean.ps1 -Test -BuildType "ReleaseFast"
+
+# Quick build without tests
+.\scripts\build-all-clean.ps1 -BuildType "Debug"
+
+# Clean build (removes previous artifacts)
+.\scripts\build-all-clean.ps1 -Clean -Test
+```
+
+#### Linux/macOS (Bash)
+```bash
+# Build all platforms with tests
+./scripts/build-all.sh --test --build-type ReleaseFast
+
+# Quick build without tests
+./scripts/build-all.sh --build-type Debug
+
+# Clean build
+./scripts/build-all.sh --clean --test
+```
+
+#### Script Features
+- **Cross-compilation**: Builds for all 5 supported platforms
+- **Test Integration**: Optionally runs full test suite before building
+- **Size Reporting**: Shows binary sizes for each platform
+- **Error Handling**: Continues building other targets if one fails
+- **Clean Builds**: Option to remove previous build artifacts
+- **Progress Tracking**: Real-time build status and summary
+
+#### Output Structure
+After running the build script, binaries are available in the `builds/` directory:
+```
+builds/
+├── 100-numbers-windows-x86_64.exe    # Windows x64 (1.0 MB)
+├── 100-numbers-linux-x86_64          # Linux x64 (3.0 MB)  
+├── 100-numbers-linux-aarch64         # Linux ARM64 (3.1 MB)
+├── 100-numbers-macos-x86_64          # macOS Intel (1.3 MB)
+└── 100-numbers-macos-aarch64         # macOS Apple Silicon (1.3 MB)
+```
+
+**Note**: Debug builds are larger (~1-3 MB) while release builds are optimized for size and performance.
 
 ## 📈 Sample Output
 

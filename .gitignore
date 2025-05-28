@@ -1,3 +1,50 @@
 # Build artifacts
-.zig-cache
-zig-out
+.zig-cache/
+zig-out/
+
+# Local build outputs
+builds/
+
+# Solution files (optional - uncomment if you don't want to track solutions)
+# solution_*.txt
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Profiling data
+*.prof
+
+# Local environment files
+.env
+.env.local
+
+# Package manager files (if using external dependencies)
+node_modules/
+*.lock
+
+# Backup files
+*.bak
+*.backup
+
+# Documentation build artifacts
+docs/build/
