@@ -88,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Architecture Evolution
 - **v0.1**: Monolithic single file
-- **v0.5**: Basic module separation  
+- **v0.5**: Basic module separation
 - **v1.0**: Full modular architecture with comprehensive testing
 
 ### Testing Evolution

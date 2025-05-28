@@ -52,7 +52,7 @@ This is a high-performance multithreaded solver for the 100 Numbers Game, writte
 # Run all tests (unit + comprehensive)
 zig build test
 
-# Run only comprehensive tests  
+# Run only comprehensive tests
 zig build test-comprehensive
 
 # Cross-platform build testing
@@ -85,13 +85,13 @@ Example test structure:
 ```zig
 test "feature_description" {
     const allocator = std.testing.allocator;
-    
+
     // Setup
     var grid = Grid.init();
-    
+
     // Exercise
     const result = grid.someOperation();
-    
+
     // Verify
     try std.testing.expect(result == expected_value);
     try std.testing.expectEqual(expected_grid_state, grid.some_field);
@@ -107,7 +107,7 @@ src/
 ├── main.zig          # Application entry point, thread coordination
 ├── grid.zig          # Core game logic, Grid struct, move validation
 ├── shared_state.zig  # Thread-safe state management, statistics
-├── worker.zig        # Worker threads, performance monitoring  
+├── worker.zig        # Worker threads, performance monitoring
 └── tests.zig         # Comprehensive test suite
 ```
 

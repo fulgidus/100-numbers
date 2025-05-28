@@ -27,7 +27,7 @@ The **100 Numbers Game** is a strategic puzzle played on a 10×10 grid where the
 ```
 From position (5,5), valid moves are:
 - Horizontal: (2,5), (8,5)
-- Vertical: (5,2), (5,8)  
+- Vertical: (5,2), (5,8)
 - Diagonal: (3,3), (7,3), (3,7), (7,7)
 ```
 
@@ -60,7 +60,7 @@ The project evolved from a single-file implementation to a well-structured modul
 ```
 src/
 ├── main.zig          # Application entry point and thread coordination
-├── grid.zig          # Core game logic and grid operations  
+├── grid.zig          # Core game logic and grid operations
 ├── shared_state.zig  # Thread-safe state management
 └── worker.zig        # Worker threads and performance monitoring
 ```
@@ -111,7 +111,7 @@ The multithreaded version achieves only **53% efficiency** instead of linear sca
 pub fn updateScore(self: *SharedState, score: u32, grid: *const Grid) void {
     self.mutex.lock();  // ← BOTTLENECK: 24 threads competing for this lock
     defer self.mutex.unlock();
-    
+
     self.games_played += 1;  // Simple increment but under mutex
     // ... rest of function
 }
@@ -121,7 +121,7 @@ pub fn updateScore(self: *SharedState, score: u32, grid: *const Grid) void {
 
 #### **2. I/O Operations Under Mutex**
 - Console output for new best scores
-- File I/O for perfect solutions  
+- File I/O for perfect solutions
 - Grid printing operations
 
 #### **3. Memory Bandwidth Saturation**
@@ -136,7 +136,7 @@ pub fn updateScore(self: *SharedState, score: u32, grid: *const Grid) void {
 // Instead of updating per game, batch every 10,000 games
 pub fn updateLocalScore(self: *LocalStats, score: u32, grid: *const Grid) void {
     self.games_played += 1;  // No mutex needed - local to thread
-    
+
     if (self.games_played % 10000 == 0) {
         shared_state.flushLocalStats(self);  // Mutex only every 10k games
     }
@@ -252,7 +252,7 @@ Each release includes optimized binaries for:
 
 - **Windows x64** (`100-numbers-windows-x86_64.exe`)
 - **Linux x64** (`100-numbers-linux-x86_64`)
-- **Linux ARM64** (`100-numbers-linux-aarch64`) 
+- **Linux ARM64** (`100-numbers-linux-aarch64`)
 - **macOS Intel** (`100-numbers-macos-x86_64`)
 - **macOS Apple Silicon** (`100-numbers-macos-aarch64`)
 
@@ -314,7 +314,7 @@ After running the build script, binaries are available in the `builds/` director
 ```
 builds/
 ├── 100-numbers-windows-x86_64.exe    # Windows x64 (1.0 MB)
-├── 100-numbers-linux-x86_64          # Linux x64 (3.0 MB)  
+├── 100-numbers-linux-x86_64          # Linux x64 (3.0 MB)
 ├── 100-numbers-linux-aarch64         # Linux ARM64 (3.1 MB)
 ├── 100-numbers-macos-x86_64          # macOS Intel (1.3 MB)
 └── 100-numbers-macos-aarch64         # macOS Apple Silicon (1.3 MB)
@@ -383,7 +383,7 @@ Performance: 6236144.6 games/sec | Efficiency: 328.2% vs unoptimized | Best: 100
 
 The solver has successfully:
 - ✅ Found **50+ perfect solutions** (100/100 complete grids)
-- ✅ Achieved **98-99/100 scores** consistently  
+- ✅ Achieved **98-99/100 scores** consistently
 - ✅ Maintained **>3.5M games/second** on 24-core systems
 - ✅ Demonstrated **linear scaling** with CPU core count
 - ✅ Proven the game's **solvability** through multiple solution discoveries
@@ -398,16 +398,16 @@ Perfect solutions are automatically saved as:
 
 ### Example Solution File
 ```
- 96  99  87  84  98  11  83  51  10  82 
- 59  68  94  58  55  93   8  54  79   7 
- 88  85  97  66  86  52  65  12   4  50 
- 95 100  56  69  91  57  80  92   9  81 
- 60  67  89  20  62  36   5  53  78   6 
- 16  70  44  38  14   2  64  13   3  49 
- 42  21  61  35  90  19  34  31  28  74 
- 45  39  15   1  63  37  26  48  77  25 
- 17  71  43  18  72  32  29  73  33  30 
- 41  22  46  40  23  47  76  24  27  75 
+ 96  99  87  84  98  11  83  51  10  82
+ 59  68  94  58  55  93   8  54  79   7
+ 88  85  97  66  86  52  65  12   4  50
+ 95 100  56  69  91  57  80  92   9  81
+ 60  67  89  20  62  36   5  53  78   6
+ 16  70  44  38  14   2  64  13   3  49
+ 42  21  61  35  90  19  34  31  28  74
+ 45  39  15   1  63  37  26  48  77  25
+ 17  71  43  18  72  32  29  73  33  30
+ 41  22  46  40  23  47  76  24  27  75
 
 ```
 

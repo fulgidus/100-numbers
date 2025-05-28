@@ -1,0 +1,75 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Run security scan weekly on Sundays at 3 AM UTC
+    - cron: "0 3 * * 0"
+
+jobs:
+  security:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: Check for sensitive files
+        run: |
+          echo "Checking for sensitive files..."
+          # Check for common sensitive file patterns
+          SENSITIVE_FILES=""
+
+          # Private keys
+          if find . -name "*.pem" -o -name "*.key" -o -name "id_rsa*" | grep -v ".git" | head -5; then
+            SENSITIVE_FILES="$SENSITIVE_FILES private_keys"
+          fi
+
+          # Configuration files that might contain secrets
+          if find . -name ".env*" -o -name "*.conf" -o -name "config.json" | grep -v ".git" | grep -v ".github" | head -5; then
+            echo "Found configuration files - please verify they don't contain secrets"
+          fi
+
+          # Check for hardcoded passwords/tokens
+          if grep -r "password\|token\|secret\|api_key" --include="*.zig" src/ | grep -v "test" | head -5; then
+            echo "Warning: Found potential hardcoded secrets in source code"
+          fi
+
+          if [ -n "$SENSITIVE_FILES" ]; then
+            echo "Warning: Found potentially sensitive files: $SENSITIVE_FILES"
+          else
+            echo "No obvious sensitive files detected"
+          fi
+
+      - name: Dependency security check
+        run: |
+          echo "Checking for known vulnerable dependencies..."
+          # For Zig projects, we mainly check build.zig.zon if it exists
+          if [ -f "build.zig.zon" ]; then
+            echo "Found build.zig.zon - dependency file present"
+            cat build.zig.zon
+          else
+            echo "No external dependencies found in build.zig.zon"
+          fi

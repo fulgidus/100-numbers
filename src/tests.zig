@@ -104,7 +104,7 @@ test "Grid.fillCell - coordinate validation and state update" {
     try expectEqual(@as(i32, 2), grid.lastMove.x);
     try expectEqual(@as(i32, 3), grid.lastMove.y);
 
-    // Verifica che la prima cella sia ancora occupata
+    // Verify that the first cell is still occupied
     try expect(grid.occupied_cells[5][5] == true);
     try expectEqual(@as(u8, 1), grid.cells[5][5]);
 }
@@ -112,7 +112,7 @@ test "Grid.fillCell - coordinate validation and state update" {
 test "Grid.fillCell - boundary coordinates" {
     var grid = Grid.init();
 
-    // Test agli angoli della griglia
+    // Test at grid corners
     grid.fillCell(0, 0);
     try expectEqual(@as(u8, 1), grid.cells[0][0]);
     try expect(grid.occupied_cells[0][0] == true);
@@ -131,14 +131,14 @@ test "Grid.fillCell - boundary coordinates" {
 }
 
 // ============================================================================
-// TEST PRIORITÀ ALTA #2: LOGICA DI GIOCO E MOSSE
+// HIGH PRIORITY TESTS #2: GAME LOGIC AND MOVES
 // ============================================================================
 
 test "Grid.makeRandomMove - no valid moves scenario" {
     var grid = Grid.init();
 
-    // Crea uno scenario dove non ci sono mosse valide
-    // Riempi tutte le celle eccetto una al centro
+    // Create a scenario where there are no valid moves
+    // Fill all cells except one in the center
     for (0..GridSize) |y| {
         for (0..GridSize) |x| {
             if (x != 5 or y != 5) {
@@ -147,35 +147,35 @@ test "Grid.makeRandomMove - no valid moves scenario" {
         }
     }
 
-    // Posiziona la mossa corrente al centro
+    // Position the current move at the center
     grid.lastMove = .{ .x = 5, .y = 5 };
     grid.fillCell(5, 5);
 
-    // Ora non dovrebbero esserci mosse valide
+    // Now there should be no valid moves
     try expectError(error.NoValidMoves, grid.makeRandomMove());
 }
 
 test "Grid.makeRandomMove - valid moves available" {
     var grid = Grid.init();
 
-    // Inizia da una posizione centrale
+    // Start from a central position
     grid.fillCell(5, 5);
 
-    // Dovrebbe essere possibile fare una mossa
+    // Should be able to make a move
     try grid.makeRandomMove();
 
-    // Il numero di celle riempite dovrebbe essere aumentato
+    // The number of filled cells should have increased
     try expectEqual(@as(u32, 2), grid.filled);
 
-    // La nuova posizione dovrebbe essere valida secondo le regole del gioco
+    // The new position should be valid according to game rules
     const last_x = grid.lastMove.x;
     const last_y = grid.lastMove.y;
 
-    // Calcola la distanza dalla posizione precedente (5,5)
+    // Calculate the distance from the previous position (5,5)
     const dx = last_x - 5;
     const dy = last_y - 5;
 
-    // Deve essere una mossa valida (3 celle orizzontali/verticali o 2 diagonali)
+    // Must be a valid move (3 cells horizontal/vertical or 2 diagonal)
     const is_valid_move = (dx == 3 and dy == 0) or (dx == -3 and dy == 0) or
         (dx == 0 and dy == 3) or (dx == 0 and dy == -3) or
         (dx == 2 and dy == 2) or (dx == 2 and dy == -2) or
@@ -187,14 +187,14 @@ test "Grid.makeRandomMove - valid moves available" {
 test "Grid.playRandomGame - basic functionality" {
     var grid = Grid.init();
 
-    // Gioca una partita casuale
+    // Play a random game
     const score = grid.playRandomGame();
 
-    // Il punteggio dovrebbe essere tra 1 e 100
+    // The score should be between 1 and 100
     try expect(score >= 1);
     try expect(score <= TotalCells);
 
-    // Il numero di celle riempite dovrebbe corrispondere al punteggio
+    // The number of filled cells should match the score
     try expectEqual(score, grid.filled);
 
     // Se il gioco è completo, tutte le celle dovrebbero essere riempite

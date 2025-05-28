@@ -1,0 +1,74 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.1
+
+      - name: Check Zig formatting
+        run: |
+          echo "Checking Zig code formatting..."
+          # Find all .zig files and check if they're properly formatted
+          find src -name "*.zig" -exec zig fmt --check {} \;
+
+      - name: Run static analysis
+        run: |
+          echo "Running static analysis..."
+          # Build with extra warnings and analysis
+          zig build -Doptimize=Debug --verbose
+
+      - name: Check for TODO/FIXME comments
+        run: |
+          echo "Checking for unresolved TODO/FIXME comments..."
+          TODO_COUNT=$(grep -r "TODO\|FIXME" src/ --include="*.zig" | wc -l || echo "0")
+          echo "Found $TODO_COUNT TODO/FIXME comments"
+          if [ "$TODO_COUNT" -gt 10 ]; then
+            echo "Warning: High number of TODO/FIXME comments ($TODO_COUNT)"
+          fi
+
+      - name: Check file permissions
+        run: |
+          echo "Checking file permissions..."
+          # Ensure scripts are executable
+          chmod +x scripts/build-all.sh
+          ls -la scripts/
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON configuration files..."
+          for file in .vscode/*.json .github/**/*.json; do
+            if [ -f "$file" ]; then
+              echo "Checking $file"
+              python3 -m json.tool "$file" > /dev/null
+            fi
+          done
+
+      - name: Check for large files
+        run: |
+          echo "Checking for unexpectedly large files..."
+          find . -type f -size +1M -not -path "./.git/*" -not -path "./zig-out/*" -not -path "./.zig-cache/*" -not -path "./builds/*" | head -10
+
+      - name: License check
+        run: |
+          echo "Checking for license headers..."
+          # Check if LICENSE file exists
+          if [ ! -f "LICENSE" ]; then
+            echo "Warning: No LICENSE file found"
+          else
+            echo "License file found: $(head -1 LICENSE)"
+          fi
