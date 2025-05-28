@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [1.0.0] - 2025-05-28
+
+### Added
 - Comprehensive CI/CD pipeline with GitHub Actions
 - Automated cross-platform releases for Windows, Linux, and macOS
 - Local build scripts for cross-platform development (`scripts/build-all.ps1`, `scripts/build-all.sh`)
