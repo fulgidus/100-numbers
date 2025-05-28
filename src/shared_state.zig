@@ -92,7 +92,7 @@ pub const SharedState = struct {
             };
 
             grid.print();
-            std.debug.print("\n");
+            std.debug.print("\n", .{});
         }
     }
 

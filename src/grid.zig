@@ -106,10 +106,19 @@ pub const Grid = struct { // Defines a structure to represent the game grid.
         }
         stdout.print("\n", .{}) catch {}; // Prints an extra newline character after the grid, ignoring errors.
     }
-
     pub fn hash(self: *const Grid) u64 { // Defines a public function to compute a hash of the grid.
-        var hasher = std.hash.Wyhash.init(0); // Initializes a Wyhash hasher with seed 0.
-        hasher.update(std.mem.asBytes(&self.cells)); // Updates the hasher with the grid cell data as bytes.
+        var hasher = std.hash.Wyhash.init(0x9E3779B97F4A7C15); // Initializes a Wyhash hasher with a good seed.
+
+        // Hash the cells matrix
+        hasher.update(std.mem.asBytes(&self.cells));
+
+        // Hash the occupied_cells matrix to distinguish between different occupation patterns
+        hasher.update(std.mem.asBytes(&self.occupied_cells));
+
+        // Hash the filled count and last move for additional uniqueness
+        hasher.update(std.mem.asBytes(&self.filled));
+        hasher.update(std.mem.asBytes(&self.lastMove));
+
         return hasher.final(); // Returns the final hash value.
     }
 
