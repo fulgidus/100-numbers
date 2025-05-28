@@ -197,7 +197,7 @@ test "Grid.playRandomGame - basic functionality" {
     // The number of filled cells should match the score
     try expectEqual(score, grid.filled);
 
-    // Se il gioco è completo, tutte le celle dovrebbero essere riempite
+    // If the game is complete, all cells should be filled
     if (score == TotalCells) {
         try expect(grid.isFull());
         for (0..GridSize) |y| {

@@ -27,40 +27,10 @@ jobs:
 
       - name: Build optimized version
         run: zig build -Doptimize=ReleaseFast
-
   build-release:
     name: Build and Release
     runs-on: ubuntu-latest
     needs: test
-
-    strategy:
-      matrix:
-        target:
-          - name: linux-x86_64
-            zig-target: x86_64-linux
-            artifact-name: 100-numbers-linux-x86_64
-            archive-cmd: tar -czf
-            archive-ext: .tar.gz
-          - name: windows-x86_64
-            zig-target: x86_64-windows
-            artifact-name: 100-numbers-windows-x86_64.exe
-            archive-cmd: zip
-            archive-ext: .zip
-          - name: macos-x86_64
-            zig-target: x86_64-macos
-            artifact-name: 100-numbers-macos-x86_64
-            archive-cmd: tar -czf
-            archive-ext: .tar.gz
-          - name: macos-aarch64
-            zig-target: aarch64-macos
-            artifact-name: 100-numbers-macos-aarch64
-            archive-cmd: tar -czf
-            archive-ext: .tar.gz
-          - name: linux-aarch64
-            zig-target: aarch64-linux
-            artifact-name: 100-numbers-linux-aarch64
-            archive-cmd: tar -czf
-            archive-ext: .tar.gz
 
     steps:
       - name: Checkout code
@@ -71,31 +41,55 @@ jobs:
         with:
           version: 0.14.1
 
-      - name: Build for ${{ matrix.target.name }}
+      - name: Build all platforms
         run: |
-          zig build -Doptimize=ReleaseFast -Dtarget=${{ matrix.target.zig-target }}
           mkdir -p release
-          # Handle different executable extensions
-          if [ -f "zig-out/bin/100.exe" ]; then
-            cp zig-out/bin/100.exe release/${{ matrix.target.artifact-name }}
-          else
-            cp zig-out/bin/100 release/${{ matrix.target.artifact-name }}
-            chmod +x release/${{ matrix.target.artifact-name }}
-          fi
+          
+          # Build for Linux x86_64
+          zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux
+          cp zig-out/bin/100 release/100-numbers-linux-x86_64
+          chmod +x release/100-numbers-linux-x86_64
+          
+          # Build for Windows x86_64
+          zig build -Doptimize=ReleaseFast -Dtarget=x86_64-windows
+          cp zig-out/bin/100.exe release/100-numbers-windows-x86_64.exe
+          
+          # Build for macOS x86_64
+          zig build -Doptimize=ReleaseFast -Dtarget=x86_64-macos
+          cp zig-out/bin/100 release/100-numbers-macos-x86_64
+          chmod +x release/100-numbers-macos-x86_64
+          
+          # Build for macOS ARM64
+          zig build -Doptimize=ReleaseFast -Dtarget=aarch64-macos
+          cp zig-out/bin/100 release/100-numbers-macos-aarch64
+          chmod +x release/100-numbers-macos-aarch64
+          
+          # Build for Linux ARM64
+          zig build -Doptimize=ReleaseFast -Dtarget=aarch64-linux
+          cp zig-out/bin/100 release/100-numbers-linux-aarch64
+          chmod +x release/100-numbers-linux-aarch64
 
-      - name: Create archive
+      - name: Create archives
         run: |
           cd release
-          if [[ "${{ matrix.target.archive-ext }}" == ".zip" ]]; then
-            zip ${{ matrix.target.name }}${{ matrix.target.archive-ext }} ${{ matrix.target.artifact-name }}
-          else
-            tar -czf ${{ matrix.target.name }}${{ matrix.target.archive-ext }} ${{ matrix.target.artifact-name }}
-          fi
-
+          
+          # Create ZIP for Windows
+          zip 100-numbers-windows-x86_64.zip 100-numbers-windows-x86_64.exe
+          
+          # Create tar.gz for Unix systems
+          tar -czf 100-numbers-linux-x86_64.tar.gz 100-numbers-linux-x86_64
+          tar -czf 100-numbers-linux-aarch64.tar.gz 100-numbers-linux-aarch64
+          tar -czf 100-numbers-macos-x86_64.tar.gz 100-numbers-macos-x86_64
+          tar -czf 100-numbers-macos-aarch64.tar.gz 100-numbers-macos-aarch64
+            # List created archives
+          ls -la *.zip *.tar.gz
+          
       - name: Upload to release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/${{ matrix.target.name }}${{ matrix.target.archive-ext }}
+          files: |
+            release/*.zip
+            release/*.tar.gz
           body: |
             ## 🎯 100 Numbers Game Solver ${{ github.ref_name }}
 
