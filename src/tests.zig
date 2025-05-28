@@ -31,26 +31,26 @@ const LocalStats = @import("shared_state.zig").LocalStats;
 test "Grid.isValidMove - bounds checking" {
     var grid = Grid.init();
 
-    // Test coordinate valide al centro
+    // Test valid coordinates at center
     try expect(grid.isValidMove(5, 5) == true);
 
-    // Test coordinate ai limiti validi
+    // Test coordinates at valid boundaries
     try expect(grid.isValidMove(0, 0) == true);
     try expect(grid.isValidMove(9, 9) == true);
     try expect(grid.isValidMove(0, 9) == true);
     try expect(grid.isValidMove(9, 0) == true);
 
-    // Test coordinate fuori dai limiti (negative)
+    // Test coordinates outside bounds (negative)
     try expect(grid.isValidMove(-1, 5) == false);
     try expect(grid.isValidMove(5, -1) == false);
     try expect(grid.isValidMove(-1, -1) == false);
 
-    // Test coordinate fuori dai limiti (troppo grandi)
+    // Test coordinates outside bounds (too large)
     try expect(grid.isValidMove(10, 5) == false);
     try expect(grid.isValidMove(5, 10) == false);
     try expect(grid.isValidMove(10, 10) == false);
 
-    // Test coordinate estremamente fuori dai limiti
+    // Test extremely out-of-bounds coordinates
     try expect(grid.isValidMove(-100, 5) == false);
     try expect(grid.isValidMove(100, 5) == false);
     try expect(grid.isValidMove(5, -100) == false);
@@ -60,16 +60,16 @@ test "Grid.isValidMove - bounds checking" {
 test "Grid.isValidMove - occupied cells" {
     var grid = Grid.init();
 
-    // Inizialmente tutte le celle dovrebbero essere libere
+    // Initially all cells should be free
     try expect(grid.isValidMove(5, 5) == true);
 
-    // Riempi una cella
+    // Fill a cell
     grid.fillCell(5, 5);
 
-    // Ora quella cella dovrebbe essere occupata
+    // Now that cell should be occupied
     try expect(grid.isValidMove(5, 5) == false);
 
-    // Le celle adiacenti dovrebbero essere ancora libere
+    // Adjacent cells should still be free
     try expect(grid.isValidMove(4, 5) == true);
     try expect(grid.isValidMove(6, 5) == true);
     try expect(grid.isValidMove(5, 4) == true);
