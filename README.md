@@ -220,26 +220,58 @@ zig build test
 ## 📈 Sample Output
 
 ```
-*** Starting 100 Numbers Game Solver (Multithreaded) ***
+> .\100.exe
+*** Starting OPTIMIZED 100 Numbers Game Solver ***
+*** Reduced Mutex Contention Version ***
 Press Ctrl+C to stop
 
 Using 24 threads (CPU cores detected)
-Started worker thread #1
-Started worker thread #2
-...
-Started worker thread #24
-Started performance monitor thread
+Expected performance improvement: 150-250% better than original
 
-New best score: 67 (Thread: 15234)
-New best score: 85 (Thread: 22156)
-New best score: 94 (Thread: 18790)
-Performance: 3542.1 games/second | Best: 94 | Perfect solutions: 0
+Started optimized worker thread #1
+Started optimized worker thread #2
+Started optimized worker thread #3
+Started optimized worker thread #4
+Started optimized worker thread #5
+Started optimized worker thread #6
+Started optimized worker thread #7
+Started optimized worker thread #8
+Started optimized worker thread #9
+Started optimized worker thread #10
+Started optimized worker thread #11
+Started optimized worker thread #12
+Started optimized worker thread #13
+Started optimized worker thread #14
+Started optimized worker thread #15
+Started optimized worker thread #16
+Started optimized worker thread #17
+Started optimized worker thread #18
+Started optimized worker thread #19
+Started optimized worker thread #20
+Started optimized worker thread #21
+Started optimized worker thread #22
+Started optimized worker thread #23
+Started optimized worker thread #24
+Started enhanced performance monitor thread
 
-New best score: 98 (Thread: 12445)
+New global best score: 92
+New global best score: 93
+New global best score: 95
+New global best score: 96
+New global best score: 97
+New global best score: 98
+Performance: 6239024.4 games/sec | Efficiency: 328.4% vs unoptimized | Best: 98 | Solutions: 0
+New global best score: 99
+Performance: 6267474.4 games/sec | Efficiency: 329.9% vs unoptimized | Best: 99 | Solutions: 0
+Performance: 6228652.8 games/sec | Efficiency: 327.8% vs unoptimized | Best: 99 | Solutions: 0
+Performance: 6202898.6 games/sec | Efficiency: 326.5% vs unoptimized | Best: 99 | Solutions: 0
+New global best score: 100
 *** PERFECT SOLUTION FOUND! (Solution #1) ***
-Solution saved to: solution_a1b2c3d4e5f6g7h8.txt
-Performance: 3580.7 games/second | Best: 100 | Perfect solutions: 1
-```
+Solution saved to: solution_d6e45d1a84fd9ce5.txt
+Solution saved to: solution_731c6db52820ee65.txt
+Solution saved to: solution_88a8ad00f70d2265.txt
+Solution saved to: solution_6e1fd66385c86315.txt
+Performance: 6236144.6 games/sec | Efficiency: 328.2% vs unoptimized | Best: 100 | Solutions: 1```
 
 ## 🎖️ Results and Achievements
 
@@ -260,16 +292,17 @@ Perfect solutions are automatically saved as:
 
 ### Example Solution File
 ```
-  1  34  67  12  35  68  25  48  71  26
- 49  72  27  50  73  28  51  74   9  52
- 33  66  11  36  69  14  37  70  13  38
-  2  47  78  15  46  79  16  45  80  17
- 75  24  53  76  23  54  77  22  55   8
- 65  10  39  64  29  40  63  30  41  62
-  3  44  81  18  43  82  19  42  83  20
- 56   7  58  21  57   6  59   4  60   5
- 87  32  61  86  31  88  33  89  31  90
-...
+ 96  99  87  84  98  11  83  51  10  82 
+ 59  68  94  58  55  93   8  54  79   7 
+ 88  85  97  66  86  52  65  12   4  50 
+ 95 100  56  69  91  57  80  92   9  81 
+ 60  67  89  20  62  36   5  53  78   6 
+ 16  70  44  38  14   2  64  13   3  49 
+ 42  21  61  35  90  19  34  31  28  74 
+ 45  39  15   1  63  37  26  48  77  25 
+ 17  71  43  18  72  32  29  73  33  30 
+ 41  22  46  40  23  47  76  24  27  75 
+
 ```
 
 ## 🔧 Technical Implementation Details
