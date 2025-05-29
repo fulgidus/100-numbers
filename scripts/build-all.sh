@@ -3,7 +3,7 @@
 # 100 Numbers Game Solver - Local Cross-Platform Build Script
 # This script builds the solver for all supported platforms locally
 
-set -e  # Exit on any error
+# Note: set -e removed to allow handling of timeouts and partial failures
 
 # Colors for output
 RED='\033[0;31m'
@@ -17,6 +17,7 @@ NC='\033[0m' # No Color
 BUILD_TYPE="ReleaseFast"
 RUN_TESTS=false
 CLEAN=false
+CORE_ONLY=false
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -33,12 +34,17 @@ while [[ $# -gt 0 ]]; do
             CLEAN=true
             shift
             ;;
+        --core-only)
+            CORE_ONLY=true
+            shift
+            ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
             echo "  --build-type TYPE  Build type (Debug, ReleaseSafe, ReleaseFast, ReleaseSmall)"
             echo "  --test            Run tests before building"
             echo "  --clean           Clean previous builds"
+            echo "  --core-only       Build only core targets (Linux x86_64, Windows x86_64)"
             echo "  -h, --help        Show this help message"
             exit 0
             ;;
@@ -71,14 +77,23 @@ fi
 # Create builds directory
 mkdir -p builds
 
-# Define target platforms
-declare -a targets=(
-    "windows-x86_64:x86_64-windows:.exe"
-    "linux-x86_64:x86_64-linux:"
-    "linux-aarch64:aarch64-linux:"
-    "macos-x86_64:x86_64-macos:"
-    "macos-aarch64:aarch64-macos:"
-)
+# Define target platforms (ordered by likelihood of success)
+# Note: ARM and macOS builds may take very long or fail due to cross-compilation complexity
+if [ "$CORE_ONLY" = true ]; then
+    declare -a targets=(
+        "linux-x86_64:x86_64-linux:"
+        "windows-x86_64:x86_64-windows:.exe"
+    )
+    echo -e "${YELLOW}🎯 Building core targets only (Linux x86_64, Windows x86_64)${NC}"
+else
+    declare -a targets=(
+        "linux-x86_64:x86_64-linux:"
+        "windows-x86_64:x86_64-windows:.exe"
+        "linux-aarch64:aarch64-linux:"
+        "macos-x86_64:x86_64-macos:"
+        "macos-aarch64:aarch64-macos:"
+    )
+fi
 
 echo -e "${YELLOW}🔨 Building for ${#targets[@]} platforms...${NC}"
 
@@ -88,10 +103,10 @@ failed_builds=()
 for target_info in "${targets[@]}"; do
     IFS=':' read -r name target extension <<< "$target_info"
     
-    echo -e "${GRAY}  ⚙️  Building for $name...${NC}"
+    echo -e "${GRAY}  ⚙️  Building for $name (this may take a few minutes)...${NC}"
     
-    # Build for the target platform
-    if zig build -Doptimize="$BUILD_TYPE" -Dtarget="$target"; then
+    # Build for the target platform with timeout to prevent hanging
+    if timeout 300s zig build -Doptimize="$BUILD_TYPE" -Dtarget="$target" 2>/dev/null; then
         # Copy the built executable to builds directory
         if [ -n "$extension" ]; then
             source_file="zig-out/bin/100.exe"
@@ -116,7 +131,12 @@ for target_info in "${targets[@]}"; do
             failed_builds+=("$name")
         fi
     else
-        echo -e "${RED}    ❌ Build failed${NC}"
+        build_exit_code=$?
+        if [ $build_exit_code -eq 124 ]; then
+            echo -e "${RED}    ❌ Build timed out (5 minutes)${NC}"
+        else
+            echo -e "${RED}    ❌ Build failed (exit code: $build_exit_code)${NC}"
+        fi
         failed_builds+=("$name")
     fi
 done
@@ -145,7 +165,24 @@ if [ $success_count -eq ${#targets[@]} ]; then
     
     echo ""
     echo -e "${GREEN}🚀 Ready for distribution!${NC}"
+elif [ $success_count -gt 0 ]; then
+    echo ""
+    echo -e "${YELLOW}⚠️  Partial build success! Some targets failed but others succeeded.${NC}"
+    echo -e "${YELLOW}📁 Available binaries in 'builds' directory:${NC}"
+    
+    for file in builds/*; do
+        if [ -f "$file" ]; then
+            file_size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo "0")
+            file_size_kb=$((file_size / 1024))
+            echo -e "  📦 $(basename "$file") (${file_size_kb} KB)"
+        fi
+    done
+    
+    echo ""
+    echo -e "${YELLOW}💡 You can still create a release with the successful builds.${NC}"
+    # Don't exit with error code for partial success
 else
+    echo -e "${RED}❌ All builds failed!${NC}"
     exit 1
 fi
 

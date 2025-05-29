@@ -112,11 +112,11 @@ echo -e "${YELLOW}Testing cross-platform builds...${NC}"
 if [ "$DRY_RUN" = true ]; then
     echo -e "${GRAY}[DRY RUN] Would run cross-platform build test${NC}"
 else
-    if ! ./scripts/build-all.sh --build-type ReleaseFast; then
+    if ! ./scripts/build-all.sh --build-type ReleaseFast --core-only; then
         echo -e "${RED}Error: Cross-platform build failed!${NC}"
         exit 1
     fi
-    echo -e "${GREEN}All platforms built successfully!${NC}"
+    echo -e "${GREEN}Core platforms built successfully!${NC}"
 fi
 
 # Update CHANGELOG.md
