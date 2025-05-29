@@ -155,3 +155,63 @@ When writing tests, ensure that:
 - If the project starts using external dependencies managed via Zig's package manager (e.g., through a `build.zig.zon` file):
   - Ensure this file is always committed.
   - Ensure dependency versions are pinned to guarantee reproducible and stable builds.
+
+# Performance Guidelines
+
+When optimizing code, follow these principles:
+
+- Profile before optimizing - use `zig build -Doptimize=ReleaseFast` for performance testing
+- Prefer algorithmic improvements over micro-optimizations
+- Use `comptime` for compile-time calculations to reduce runtime overhead
+- Minimize memory allocations in hot paths
+- Document performance-critical sections with comments explaining why specific approaches were chosen
+- Include performance benchmarks in commit messages when making optimization changes
+- Always test both debug and release builds before commits
+- Use `-Doptimize=ReleaseFast` for production builds
+- Include cross-compilation testing in CI for all target platforms
+- Ensure builds are reproducible - avoid system-dependent paths or timestamps
+
+# Memory Management
+
+When working with memory in Zig:
+
+- Use arena allocators for temporary allocations that can be freed together
+- Always pair allocator.alloc() with allocator.free()
+- Use `defer` for automatic cleanup in error paths
+- Prefer stack allocation over heap when data size is known and reasonable
+- Document memory ownership in function signatures
+- Avoid memory leaks by ensuring all allocated memory is properly freed
+
+# Multithreading Guidelines
+
+For concurrent code:
+
+- Use Zig's thread-safe primitives (`std.Thread.Mutex`, `std.atomic`)
+- Avoid shared mutable state when possible - prefer message passing
+- Document thread safety guarantees in function comments
+- Use `std.Thread.Pool` for work distribution patterns
+- Always handle thread creation/joining errors gracefully
+- Test multithreaded code with different thread counts and under high load
+- Ensure proper synchronization to avoid race conditions
+
+# Error Handling Specifics
+
+For robust error handling:
+
+- Define custom error sets for different subsystems (e.g., `GridError`, `WorkerError`)
+- Always handle or explicitly propagate errors - never ignore them
+- Use descriptive error names that indicate the failure cause
+- Log errors with sufficient context for debugging
+- Prefer returning errors over printing and continuing
+- Include relevant context in error messages (thread ID, operation state)
+
+# Logging and Debugging
+
+When adding logging and debug information:
+
+- Use structured logging with consistent format
+- Include relevant context in log messages (thread ID, operation state)
+- Use different log levels appropriately (debug, info, warn, error)
+- Never log sensitive information
+- Ensure logging doesn't significantly impact performance in release builds
+- Use `std.log` for consistent logging across the application
