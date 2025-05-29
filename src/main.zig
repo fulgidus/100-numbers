@@ -1,13 +1,18 @@
 // ============================================================================
-// 100 Numbers Game Solver in Zig - Optimized Main Entry Point
+// 100 Numbers Game Solver in Zig - Enhanced with Cyclic Solution Detection
 //
 // This program solves the "100 Numbers Game" on a 10x10 grid. The objective
 // is to fill the grid with numbers from 1 to 100, starting from any cell,
 // following specific movement rules:
-// - Each move must jump two cells horizontally or vertically, or one cell
+// - Each move must jump three cells horizontally or vertically, or two cells
 //   diagonally.
 // - Moves cannot revisit any previously filled cell.
 // - The goal is to fill all 100 cells without violating the movement rules.
+//
+// NEW FEATURES:
+// - Cyclic solution detection: Identifies solutions that can loop back to start
+// - Comprehensive variant generation: 400 variants for cyclic solutions
+// - Path tracking: Complete move history for advanced analysis
 //
 // The solver uses optimized multithreading with reduced mutex contention:
 // - Local statistics per thread (no synchronization needed)
@@ -15,8 +20,8 @@
 // - 99.97% reduction in mutex operations for 213% performance improvement
 //
 // Architecture:
-// - grid.zig: Core game logic and grid operations
-// - shared_state.zig: Optimized thread-safe state management with LocalStats
+// - grid.zig: Core game logic with cyclic detection and variant generation
+// - shared_state.zig: Thread-safe state management with smart solution saving
 // - worker.zig: Optimized worker thread functions with batched updates
 // - main.zig: Application entry point and thread coordination
 // ============================================================================

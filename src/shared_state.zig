@@ -1,10 +1,12 @@
 // ============================================================================
-// Optimized Shared State Module - Performance Improvements
+// Optimized Shared State Module - Enhanced with Cyclic Solution Detection
 //
-// This version reduces mutex contention by:
+// This version includes:
 // - Batching updates from worker threads
 // - Using local statistics per thread
 // - Reducing I/O operations under mutex
+// - Cyclic solution detection and generation of 400 variants
+// - Smart solution saving: 4 orientations for regular, 400 for cyclic
 // ============================================================================
 
 const std = @import("std");
@@ -129,29 +131,70 @@ pub const SharedState = struct {
     fn saveSolutionAsync(self: *SharedState, grid: *const Grid) !void {
         _ = self; // Mark parameter as used
 
-        // Generate all 4 possible orientations of the solution
-        const flipped_grid = grid.flip();
-        const inverted_grid = grid.invert();
-        const flipped_inverted_grid = flipped_grid.invert();
+        // Check if the solution is cyclic
+        if (grid.isCyclicSolution()) {
+            std.debug.print("*** CYCLIC SOLUTION DETECTED! Generating 400 variants ***\n", .{});
 
-        const grids: [4]Grid = .{
-            grid.*,
-            inverted_grid,
-            flipped_grid,
-            flipped_inverted_grid,
-        };
+            // Generate all 400 variants (100 shifts × 4 orientations)
+            var variants = grid.generateAllCyclicVariants(std.heap.page_allocator) catch |err| {
+                std.debug.print("Error generating cyclic variants: {}\n", .{err});
+                // Fallback to basic 4 orientations
+                const grids: [4]Grid = .{
+                    grid.*,
+                    grid.invert(),
+                    grid.flip(),
+                    grid.flip().invert(),
+                };
 
-        // Save each orientation as a separate file
-        for (grids) |g| {
-            const hash = g.hash();
-            const filename = std.fmt.allocPrintZ(std.heap.page_allocator, "solution_{x}.txt", .{hash}) catch |err| {
-                std.debug.print("Error allocating filename: {}\n", .{err});
-                return err;
+                for (grids) |g| {
+                    const hash = g.hash();
+                    const filename = std.fmt.allocPrintZ(std.heap.page_allocator, "solution_c_{x}.txt", .{hash}) catch continue;
+                    defer std.heap.page_allocator.free(filename);
+                    g.saveSolutionToFile(filename) catch {};
+                    std.debug.print("Solution saved to: {s}\n", .{filename});
+                }
+                return;
             };
-            defer std.heap.page_allocator.free(filename);
+            defer variants.deinit();
 
-            try g.saveSolutionToFile(filename);
-            std.debug.print("Solution saved to: {s}\n", .{filename});
+            // Save all 400 variants
+            var saved_count: u32 = 0;
+            for (variants.items) |variant| {
+                const hash = variant.hash();
+                const filename = std.fmt.allocPrintZ(std.heap.page_allocator, "solution_c_{x}.txt", .{hash}) catch continue;
+                defer std.heap.page_allocator.free(filename);
+
+                variant.saveSolutionToFile(filename) catch |err| {
+                    std.debug.print("Error saving variant: {}\n", .{err});
+                    continue;
+                };
+                saved_count += 1;
+            }
+            std.debug.print("Successfully saved {} cyclic solution variants\n", .{saved_count});
+        } else {
+            // Non-cyclic solution: save only 4 basic orientations
+            const grids: [4]Grid = .{
+                grid.*,
+                grid.invert(),
+                grid.flip(),
+                grid.flip().invert(),
+            };
+
+            // Save each orientation as a separate file
+            for (grids) |g| {
+                const hash = g.hash();
+                const filename = std.fmt.allocPrintZ(std.heap.page_allocator, "solution_{x}.txt", .{hash}) catch |err| {
+                    std.debug.print("Error allocating filename: {}\n", .{err});
+                    continue;
+                };
+                defer std.heap.page_allocator.free(filename);
+
+                g.saveSolutionToFile(filename) catch |err| {
+                    std.debug.print("Error saving solution: {}\n", .{err});
+                    continue;
+                };
+                std.debug.print("Solution saved to: {s}\n", .{filename});
+            }
         }
     }
 

@@ -5,14 +5,26 @@ All notable changes to the 100 Numbers Game Solver will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0]
 
 ### Added
+- 🔄 **Cyclic Solution Detection**: Automatic detection of solutions where the last position can legally move back to the first
+- 🎯 **Path Tracking**: Complete move history tracking for all solutions enabling advanced analysis
+- 🚀 **Comprehensive Variant Generation**: Generate up to 400 unique variants for cyclic solutions (100 shifts × 4 orientations)
+- 📊 **Smart Solution Categorization**: Automatic differentiation between regular (4 variants) and cyclic (400 variants) solutions
+- 🔍 **Legal Move Validation**: Enhanced move validation specifically for cyclic analysis
+- 📁 **Enhanced File Naming**: Cyclic solutions saved with `solution_c_` prefix for easy identification
+
 ### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security
+- **Solution Storage**: Upgraded from fixed 4 orientations to intelligent variant generation based on solution type
+- **Grid Structure**: Enhanced with path tracking array for comprehensive move history
+- **Performance Monitoring**: Updated output to reflect cyclic solution detection capabilities
+- **Documentation**: Comprehensive updates to README.md with cyclic solution explanations and examples
+
+### Enhanced
+- **Mathematical Analysis**: Solutions now provide maximum possible variant coverage for research purposes
+- **Memory Efficiency**: Path tracking implemented with minimal memory overhead
+- **User Experience**: Clear console output distinguishing between regular and cyclic solution discoveries
 
 ## [1.0.7] - 2025-05-29
 

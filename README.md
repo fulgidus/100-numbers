@@ -1,7 +1,7 @@
 
 # 100 Numbers Game Solver in Zig
 
-A high-performance multithreaded solver for the "100 Numbers Game" written in Zig, capable of finding perfect solutions to this challenging mathematical puzzle.
+A high-performance multithreaded solver for the "100 Numbers Game" written in Zig, capable of finding perfect solutions to this challenging mathematical puzzle. **Now featuring advanced cyclic solution detection and comprehensive variant generation!**
 
 <!-- [![CI/CD Pipeline](https://github.com/aless/100-numbers/actions/workflows/ci.yml/badge.svg)](https://github.com/aless/100-numbers/actions/workflows/ci.yml)
 [![Release](https://github.com/aless/100-numbers/actions/workflows/release.yml/badge.svg)](https://github.com/aless/100-numbers/actions/workflows/release.yml) -->
@@ -73,12 +73,17 @@ src/
 - `Grid` struct representing the 10×10 game board
 - `Move` struct for coordinate changes
 - Game mechanics (validation, moves, scoring)
+- **Cyclic solution detection** for enhanced variant generation
+- **Path tracking** to enable cyclic analysis
 - File I/O for solution persistence
 - Grid transformations (flip, invert) for solution uniqueness
+- **Advanced variant generation**: 400 variants for cyclic solutions
 
 #### `shared_state.zig` - Concurrency Management
 - Thread-safe statistics tracking
 - Mutex-protected shared state
+- **Smart solution saving**: 4 orientations for regular solutions, 400 for cyclic
+- **Cyclic solution detection** and automatic variant generation
 - Automatic solution detection and saving
 - Performance metrics aggregation
 
@@ -182,13 +187,41 @@ The solver uses a **Monte Carlo approach** with several optimizations:
 2. **Greedy Move Selection**: From current position, randomly select from all valid moves
 3. **Early Termination**: Games end when no valid moves remain
 4. **Solution Persistence**: Perfect solutions (100/100) are automatically saved
-5. **Duplicate Detection**: Uses hash-based deduplication across 4 orientations
+5. **Duplicate Detection**: Uses hash-based deduplication across orientations
+6. **🆕 Cyclic Solution Detection**: Automatically detects when solutions can loop back to start
+7. **🆕 Comprehensive Variant Generation**: 400 variants for cyclic solutions (100 shifts × 4 orientations)
 
 ### Why This Approach Works
 - **Exploration Diversity**: Random starting points ensure comprehensive search space coverage
 - **Parallel Efficiency**: Independent game simulations scale perfectly across cores
 - **Solution Rarity**: Perfect solutions are extremely rare, making brute force viable
 - **Hash Optimization**: Quick duplicate detection prevents redundant solution storage
+- **🆕 Cyclic Analysis**: Path tracking enables detection of special cyclic properties
+- **🆕 Maximum Coverage**: Cyclic solutions generate vastly more unique variants
+
+## 🔄 Cyclic Solution Detection
+
+### What are Cyclic Solutions?
+A **cyclic solution** is a perfect 100-cell solution where the final position can legally move back to the starting position, creating a closed loop. These are extremely rare and mathematically significant.
+
+### Key Features
+- **Automatic Detection**: Every perfect solution is checked for cyclicity
+- **Path Tracking**: Complete move history is maintained for analysis
+- **Legal Move Validation**: Ensures the return move follows game rules
+- **Variant Explosion**: Cyclic solutions generate 400 unique variants instead of 4
+
+### Variant Generation
+| Solution Type | Variants Generated | Description |
+| ------------- | ------------------ | ----------- |
+| **Regular**   | 4                  | Basic orientations (original, flip, invert, flip+invert) |
+| **🔄 Cyclic** | **400**            | **100 cyclic shifts × 4 orientations each** |
+
+### Example Output
+```
+*** PERFECT SOLUTION FOUND! (Solution #1) ***
+*** CYCLIC SOLUTION DETECTED! Generating 400 variants ***
+Successfully saved 400 cyclic solution variants
+```
 
 ## 🛠️ Building and Running
 
@@ -369,18 +402,18 @@ New global best score: 95
 New global best score: 96
 New global best score: 97
 New global best score: 98
-Performance: 6239024.4 games/sec | Efficiency: 328.4% vs unoptimized | Best: 98 | Solutions: 0
+Performance: 6239024.4 games/sec | Best: 98 | Solutions: 0
 New global best score: 99
-Performance: 6267474.4 games/sec | Efficiency: 329.9% vs unoptimized | Best: 99 | Solutions: 0
-Performance: 6228652.8 games/sec | Efficiency: 327.8% vs unoptimized | Best: 99 | Solutions: 0
-Performance: 6202898.6 games/sec | Efficiency: 326.5% vs unoptimized | Best: 99 | Solutions: 0
+Performance: 6267474.4 games/sec | Best: 99 | Solutions: 0
+Performance: 6228652.8 games/sec | Best: 99 | Solutions: 0
+Performance: 6202898.6 games/sec | Best: 99 | Solutions: 0
 New global best score: 100
 *** PERFECT SOLUTION FOUND! (Solution #1) ***
 Solution saved to: solution_d6e45d1a84fd9ce5.txt
 Solution saved to: solution_731c6db52820ee65.txt
 Solution saved to: solution_88a8ad00f70d2265.txt
 Solution saved to: solution_6e1fd66385c86315.txt
-Performance: 6236144.6 games/sec | Efficiency: 328.2% vs unoptimized | Best: 100 | Solutions: 1
+Performance: 6236144.6 games/sec | Best: 100 | Solutions: 1
 ```
 
 ## 🎖️ Results and Achievements
@@ -391,14 +424,28 @@ The solver has successfully:
 - ✅ Maintained **>3.5M games/second** on 24-core systems
 - ✅ Demonstrated **linear scaling** with CPU core count
 - ✅ Proven the game's **solvability** through multiple solution discoveries
+- ✅ **🆕 Implemented cyclic solution detection** for comprehensive analysis
+- ✅ **🆕 Generated up to 400 variants** per cyclic solution for mathematical study
 
 ## 📁 Solution Files
 
-Perfect solutions are automatically saved as:
+Perfect solutions are automatically saved with intelligent categorization:
+
+### Regular Solutions
 - **Filename format**: `solution_{hash}.txt`
+- **Variants**: 4 orientations (original, flip, invert, flip+invert)
 - **Content**: 10×10 grid with numbers 1-100
-- **Deduplication**: Hash-based detection prevents duplicate saves
-- **Orientations**: All 4 rotations/flips are checked for uniqueness
+
+### 🔄 Cyclic Solutions
+- **Filename format**: `solution_c_{hash}.txt`
+- **Variants**: 400 unique variations (100 shifts × 4 orientations)
+- **Special property**: Can return from position 100 to position 1
+- **Mathematical significance**: Extremely rare closed-loop solutions
+
+### Features
+- **Hash-based deduplication**: Prevents duplicate saves
+- **Automatic detection**: Cyclic property detected and handled automatically
+- **Comprehensive coverage**: Maximum variant generation for analysis
 
 ### Example Solution File
 ```

@@ -57,7 +57,7 @@ pub fn performanceMonitor(shared_state: *SharedState) void {
 
     // Get CPU count for efficiency calculation
     // const cpu_count = std.Thread.getCpuCount() catch 4;
-    const unoptimized_baseline = 1900000.0; // 1.9M games/sec from unoptimized version
+    // const unoptimized_baseline = 1900000.0; // 1.9M games/sec from unoptimized version
     // const expected_per_core = unoptimized_baseline / @as(f64, @floatFromInt(cpu_count));
 
     while (true) {
@@ -72,9 +72,9 @@ pub fn performanceMonitor(shared_state: *SharedState) void {
             const games_per_second = @as(f64, @floatFromInt(games_in_interval)) / time_elapsed_sec;
 
             // Calculate efficiency against unoptimized baseline
-            const efficiency = (games_per_second / unoptimized_baseline) * 100.0;
+            // const efficiency = (games_per_second / unoptimized_baseline) * 100.0;
 
-            std.debug.print("Performance: {d:.1} games/sec | Efficiency: {d:.1}% vs unoptimized | Best: {} | Solutions: {}\n", .{ games_per_second, efficiency, stats.best_score, stats.solutions_found });
+            std.debug.print("Performance: {d:.1} games/sec | Best: {} | Solutions: {}\n", .{ games_per_second, stats.best_score, stats.solutions_found });
 
             last_report_time = current_time;
             last_games_count = stats.games_played;

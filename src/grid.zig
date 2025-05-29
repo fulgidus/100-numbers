@@ -1,11 +1,14 @@
 // ============================================================================
-// Grid and Move structures for the 100 Numbers Game
+// Grid and Move structures for the 100 Numbers Game - Enhanced Edition
 //
 // This module contains the core game logic including:
 // - Move structure for representing game moves
 // - Grid structure for the 10x10 game board
 // - All grid manipulation functions (fill, validate, print, etc.)
 // - Game playing logic and file I/O operations
+// - 🆕 Cyclic solution detection and path tracking
+// - 🆕 Comprehensive variant generation (up to 400 variants per solution)
+// - 🆕 Legal move validation for cyclic analysis
 // ============================================================================
 
 const std = @import("std");
@@ -18,6 +21,11 @@ pub const Move = struct { // Defines a structure to represent a move.
     y: i32, // The change in the y-coordinate for the move.
 };
 
+pub const Position = struct { // Defines a structure to represent a position on the grid.
+    x: i32, // The x-coordinate of the position.
+    y: i32, // The y-coordinate of the position.
+};
+
 pub const moves = [_]Move{ // Defines an array of possible moves.
     .{ .x = 3, .y = 0 }, .{ .x = -3, .y = 0 }, .{ .x = 0, .y = 3 }, .{ .x = 0, .y = -3 }, // Horizontal and vertical jumps of three cells.
     .{ .x = 2, .y = 2 }, .{ .x = 2, .y = -2 }, .{ .x = -2, .y = 2 }, .{ .x = -2, .y = -2 }, // Diagonal jumps of two cells.
@@ -26,15 +34,19 @@ pub const moves = [_]Move{ // Defines an array of possible moves.
 pub const Grid = struct { // Defines a structure to represent the game grid.
     cells: [GridSize][GridSize]u8, // A 2D array to store the cell values.
     occupied_cells: [GridSize][GridSize]bool, // A 2D array to track if a cell is occupied.
-    lastMove: Move, // Stores the last move made on the grid.
+    lastMove: Position, // Stores the last position made on the grid.
     filled: u32, // Stores the number of cells currently filled.
+
+    // New field to track the complete path for cyclic detection
+    path: [TotalCells]Position, // Array to store the complete path of moves
 
     pub fn init() Grid { // Defines a public function to initialize a new grid.
         return Grid{
             .cells = std.mem.zeroes([GridSize][GridSize]u8), // Initialize all cells to zero.
             .occupied_cells = std.mem.zeroes([GridSize][GridSize]bool), // Initialize all cells as unoccupied.
             .filled = 0, // Initialize filled counter to zero.
-            .lastMove = .{ .x = 0, .y = 0 }, // Initialize last move to origin.
+            .lastMove = Position{ .x = 0, .y = 0 }, // Initialize last position to origin.
+            .path = std.mem.zeroes([TotalCells]Position), // Initialize path array.
         };
     }
 
@@ -51,7 +63,10 @@ pub const Grid = struct { // Defines a structure to represent the game grid.
         self.cells[@as(usize, @intCast(y))][@as(usize, @intCast(x))] = moveNumber; // Sets the value of the cell at (x, y).
         self.occupied_cells[@as(usize, @intCast(y))][@as(usize, @intCast(x))] = true; // Marks the cell as occupied.
         self.filled = moveNumber; // Increments the count of filled cells.
-        self.lastMove = .{ .x = x, .y = y }; // Updates the last move to the current cell.
+        self.lastMove = Position{ .x = x, .y = y }; // Updates the last position to the current cell.
+
+        // Track the path for cyclic solution detection
+        self.path[@as(usize, @intCast(moveNumber - 1))] = Position{ .x = x, .y = y }; // Store the move in the path array.
     }
 
     pub fn makeRandomMove(self: *Grid) !void { // Defines a public function to make a random valid move.
@@ -158,5 +173,85 @@ pub const Grid = struct { // Defines a structure to represent the game grid.
             }
             try file.writeAll("\n"); // Writes a newline character at the end of each row.
         }
+    }
+
+    // =====================================================================
+    // CYCLIC SOLUTION DETECTION AND VARIANT GENERATION FUNCTIONS
+    // =====================================================================
+
+    /// Checks if a perfect solution is cyclic (can return from last position to first)
+    pub fn isCyclicSolution(self: *const Grid) bool {
+        if (self.filled != TotalCells) return false; // Only check perfect solutions
+
+        const first_pos = self.path[0]; // Starting position
+        const last_pos = self.path[TotalCells - 1]; // Final position
+
+        return self.isLegalKnightMove(last_pos, first_pos); // Check if last to first is a valid move
+    }
+
+    /// Checks if a move between two positions is a legal knight move
+    pub fn isLegalKnightMove(self: *const Grid, from_pos: Position, to_pos: Position) bool {
+        _ = self; // Mark parameter as used to avoid warning
+        const dx = @abs(from_pos.x - to_pos.x);
+        const dy = @abs(from_pos.y - to_pos.y);
+
+        // Check if the move matches any of the defined moves
+        for (moves) |move| {
+            if ((@abs(move.x) == dx and @abs(move.y) == dy) or (@abs(move.x) == dy and @abs(move.y) == dx)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Generates a cyclically shifted version of the solution
+    pub fn shiftSolution(self: *const Grid, shift: u32) Grid {
+        if (self.filled != TotalCells) return self.*; // Only shift perfect solutions
+
+        var shifted = Grid.init();
+        shifted.filled = TotalCells;
+
+        // Apply the cyclic shift to the path and regenerate the grid
+        for (0..TotalCells) |i| {
+            const shifted_index = (i + shift) % TotalCells;
+            const pos = self.path[shifted_index];
+            shifted.path[i] = pos;
+            shifted.cells[@as(usize, @intCast(pos.y))][@as(usize, @intCast(pos.x))] = @as(u8, @intCast(i + 1));
+            shifted.occupied_cells[@as(usize, @intCast(pos.y))][@as(usize, @intCast(pos.x))] = true;
+        }
+
+        // Set the last move
+        shifted.lastMove = shifted.path[TotalCells - 1];
+
+        return shifted;
+    }
+
+    /// Generates all 400 variants of a cyclic solution (100 shifts × 4 orientations)
+    pub fn generateAllCyclicVariants(self: *const Grid, allocator: std.mem.Allocator) !std.ArrayList(Grid) {
+        var variants = std.ArrayList(Grid).init(allocator);
+
+        if (!self.isCyclicSolution()) {
+            // If not cyclic, return only the 4 basic orientations
+            try variants.append(self.*);
+            try variants.append(self.flip());
+            try variants.append(self.invert());
+            const flipped_inverted = self.flip().invert();
+            try variants.append(flipped_inverted);
+            return variants;
+        }
+
+        // Generate all 100 cyclic shifts
+        for (0..TotalCells) |shift| {
+            const shifted = self.shiftSolution(@as(u32, @intCast(shift)));
+
+            // For each shift, generate all 4 orientations
+            try variants.append(shifted); // Original
+            try variants.append(shifted.flip()); // Horizontally flipped
+            try variants.append(shifted.invert()); // Vertically inverted
+            const flipped_inverted = shifted.flip().invert(); // Both flipped and inverted
+            try variants.append(flipped_inverted);
+        }
+
+        return variants;
     }
 };
