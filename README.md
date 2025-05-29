@@ -7,7 +7,11 @@ A high-performance multithreaded solver for the "100 Numbers Game" written in Zi
 [![Release](https://github.com/aless/100-numbers/actions/workflows/release.yml/badge.svg)](https://github.com/aless/100-numbers/actions/workflows/release.yml) -->
 [![Zig](https://img.shields.io/badge/Zig-0.14.1-orange.svg)](https://ziglang.org/download/)
 [![License](https://img.shields.io/badge/GPL-3.0-blue.svg)](https://opensource.org/licenses/GPL-3.0)
+
 [![Latest Release](https://img.shields.io/github/v/release/fulgidus/100-numbers)](https://github.com/fulgidus/100-numbers/releases/latest)
+[![CI/CD Pipeline](https://github.com/fulgidus/100-numbers/actions/workflows/ci.yml/badge.svg)](https://github.com/fulgidus/100-numbers/actions/workflows/ci.yml)
+[![Code Quality](https://github.com/fulgidus/100-numbers/actions/workflows/quality.yml/badge.svg)](https://github.com/fulgidus/100-numbers/actions/workflows/quality.yml)
+[![Security Scan](https://github.com/fulgidus/100-numbers/actions/workflows/security.yml/badge.svg)](https://github.com/fulgidus/100-numbers/actions/workflows/security.yml)
 
 ## 🎯 About the Game
 
