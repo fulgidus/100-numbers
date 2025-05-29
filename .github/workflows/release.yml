@@ -142,29 +142,9 @@ jobs:
               echo "⚠️  Skipping $file (not found)"
             fi
           done
-              echo ""
-            echo "📋 Created archives:"
-                ls -la *.zip *.tar.gz 2>/dev/null || echo "No archives found"
-
-        - name: Verify release files
-          run: |
-            echo "🔍 Verifying release files before upload..."
-            cd release
-
-            echo "📋 Files to upload:"
-            find . -name "*.zip" -o -name "*.tar.gz" | while read file; do
-              echo "  📦 $file ($(du -h "$file" | cut -f1))"
-            done
-
-            # Count files
-            file_count=$(find . -name "*.zip" -o -name "*.tar.gz" | wc -l)
             echo ""
-            echo "📊 Total files to upload: $file_count"
-
-            if [ $file_count -eq 0 ]; then
-              echo "⚠️  Warning: No archive files found to upload"
-              exit 1
-            fi
+            echo "📋 Created archives:"
+            ls -la *.zip *.tar.gz 2>/dev/null || echo "No archives found"
 
       - name: Upload to release
         id: upload_release
