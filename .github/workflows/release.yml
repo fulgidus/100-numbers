@@ -47,6 +47,12 @@ jobs:
         with:
           version: 0.14.1
 
+      - name: Check if running on fork
+        if: github.repository != 'fulgidus/100-numbers'
+        run: |
+          echo "This workflos is enabled to run only on the original repo."
+          exit 1
+
       - name: Build all platforms
         run: |
           mkdir -p release
