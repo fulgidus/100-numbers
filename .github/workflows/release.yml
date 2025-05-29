@@ -5,6 +5,11 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+  actions: read
+  checks: read
+
 jobs:
   test:
     name: Test on ${{ matrix.os }}
@@ -27,6 +32,7 @@ jobs:
 
       - name: Build optimized version
         run: zig build -Doptimize=ReleaseFast
+
   build-release:
     name: Build and Release
     runs-on: ubuntu-latest
@@ -44,52 +50,133 @@ jobs:
       - name: Build all platforms
         run: |
           mkdir -p release
-          
-          # Build for Linux x86_64
-          zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux
-          cp zig-out/bin/100 release/100-numbers-linux-x86_64
-          chmod +x release/100-numbers-linux-x86_64
-          
-          # Build for Windows x86_64
-          zig build -Doptimize=ReleaseFast -Dtarget=x86_64-windows
-          cp zig-out/bin/100.exe release/100-numbers-windows-x86_64.exe
-          
-          # Build for macOS x86_64
-          zig build -Doptimize=ReleaseFast -Dtarget=x86_64-macos
-          cp zig-out/bin/100 release/100-numbers-macos-x86_64
-          chmod +x release/100-numbers-macos-x86_64
-          
-          # Build for macOS ARM64
-          zig build -Doptimize=ReleaseFast -Dtarget=aarch64-macos
-          cp zig-out/bin/100 release/100-numbers-macos-aarch64
-          chmod +x release/100-numbers-macos-aarch64
-          
-          # Build for Linux ARM64
-          zig build -Doptimize=ReleaseFast -Dtarget=aarch64-linux
-          cp zig-out/bin/100 release/100-numbers-linux-aarch64
-          chmod +x release/100-numbers-linux-aarch64
+
+          echo "🚀 Starting cross-platform build process..."
+
+          # Function to build for a target
+          build_target() {
+            local target=$1
+            local output_name=$2
+            local binary_name=$3
+
+            echo "🔨 Building for $target..."
+
+            # Clean previous build
+            rm -rf zig-out
+
+            # Build with error handling
+            if zig build -Doptimize=ReleaseFast -Dtarget=$target; then
+              if [ -f "zig-out/bin/$binary_name" ]; then
+                cp "zig-out/bin/$binary_name" "release/$output_name"
+
+                # Make executable for Unix systems
+                if [[ "$output_name" != *.exe ]]; then
+                  chmod +x "release/$output_name"
+                fi
+
+                echo "✅ Successfully built $output_name"
+                ls -la "release/$output_name"
+                return 0
+              else
+                echo "❌ Binary not found: zig-out/bin/$binary_name"
+                echo "Available files in zig-out/bin/:"
+                ls -la zig-out/bin/ || echo "No bin directory found"
+                return 1
+              fi
+            else
+              echo "❌ Failed to build for target: $target"
+              return 1
+            fi
+          }
+
+          # Track build results
+          failed_builds=0
+
+          # Build for all platforms
+          echo "Building Linux x86_64..."
+          build_target "x86_64-linux" "100-numbers-linux-x86_64" "100" || ((failed_builds++))
+
+          echo "Building Windows x86_64..."
+          build_target "x86_64-windows" "100-numbers-windows-x86_64.exe" "100.exe" || ((failed_builds++))
+
+          echo "Building macOS x86_64..."
+          build_target "x86_64-macos" "100-numbers-macos-x86_64" "100" || ((failed_builds++))
+
+          echo "Building macOS ARM64..."
+          build_target "aarch64-macos" "100-numbers-macos-aarch64" "100" || ((failed_builds++))
+
+          echo "Building Linux ARM64..."
+          build_target "aarch64-linux" "100-numbers-linux-aarch64" "100" || ((failed_builds++))
+
+          # Report results
+          echo ""
+          echo "📋 Build Results:"
+          echo "Built files in release/:"
+          ls -la release/
+
+          if [ $failed_builds -gt 0 ]; then
+            echo "⚠️  Warning: $failed_builds builds failed"
+            echo "Continuing with available binaries..."
+          else
+            echo "🎉 All builds completed successfully!"
+          fi
 
       - name: Create archives
         run: |
           cd release
-          
-          # Create ZIP for Windows
-          zip 100-numbers-windows-x86_64.zip 100-numbers-windows-x86_64.exe
-          
-          # Create tar.gz for Unix systems
-          tar -czf 100-numbers-linux-x86_64.tar.gz 100-numbers-linux-x86_64
-          tar -czf 100-numbers-linux-aarch64.tar.gz 100-numbers-linux-aarch64
-          tar -czf 100-numbers-macos-x86_64.tar.gz 100-numbers-macos-x86_64
-          tar -czf 100-numbers-macos-aarch64.tar.gz 100-numbers-macos-aarch64
-            # List created archives
-          ls -la *.zip *.tar.gz
-          
+
+          echo "📦 Creating archives..."
+
+          # Create ZIP for Windows (if exists)
+          if [ -f "100-numbers-windows-x86_64.exe" ]; then
+            zip 100-numbers-windows-x86_64.zip 100-numbers-windows-x86_64.exe
+            echo "✅ Created Windows ZIP"
+          fi
+
+          # Create tar.gz for Unix systems (if they exist)
+          for file in 100-numbers-linux-x86_64 100-numbers-linux-aarch64 100-numbers-macos-x86_64 100-numbers-macos-aarch64; do
+            if [ -f "$file" ]; then
+              tar -czf "${file}.tar.gz" "$file"
+              echo "✅ Created ${file}.tar.gz"
+            else
+              echo "⚠️  Skipping $file (not found)"
+            fi
+          done
+              echo ""
+            echo "📋 Created archives:"
+                ls -la *.zip *.tar.gz 2>/dev/null || echo "No archives found"
+
+        - name: Verify release files
+          run: |
+            echo "🔍 Verifying release files before upload..."
+            cd release
+
+            echo "📋 Files to upload:"
+            find . -name "*.zip" -o -name "*.tar.gz" | while read file; do
+              echo "  📦 $file ($(du -h "$file" | cut -f1))"
+            done
+
+            # Count files
+            file_count=$(find . -name "*.zip" -o -name "*.tar.gz" | wc -l)
+            echo ""
+            echo "📊 Total files to upload: $file_count"
+
+            if [ $file_count -eq 0 ]; then
+              echo "⚠️  Warning: No archive files found to upload"
+              exit 1
+            fi
+
       - name: Upload to release
+        id: upload_release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             release/*.zip
             release/*.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          fail_on_unmatched_files: false
           body: |
             ## 🎯 100 Numbers Game Solver ${{ github.ref_name }}
 
@@ -99,11 +186,11 @@ jobs:
 
             Choose the appropriate binary for your system:
 
-            - **Windows x64**: `windows-x86_64.zip`
-            - **Linux x64**: `linux-x86_64.tar.gz`
-            - **Linux ARM64**: `linux-aarch64.tar.gz`
-            - **macOS Intel**: `macos-x86_64.tar.gz`
-            - **macOS Apple Silicon**: `macos-aarch64.tar.gz`
+            - **Windows x64**: `100-numbers-windows-x86_64.zip`
+            - **Linux x64**: `100-numbers-linux-x86_64.tar.gz`
+            - **Linux ARM64**: `100-numbers-linux-aarch64.tar.gz`
+            - **macOS Intel**: `100-numbers-macos-x86_64.tar.gz`
+            - **macOS Apple Silicon**: `100-numbers-macos-aarch64.tar.gz`
 
             ### 🚀 Features
 
@@ -140,8 +227,24 @@ jobs:
 
             ### 💡 About the Game
 
-            The 100 Numbers Game is a strategic puzzle where you fill a 10×10 grid with consecutive numbers 1-100, following specific movement rules (3 cells orthogonally or 2 cells diagonally).
-
-            **Built with Zig 0.14.1**
+            The 100 Numbers Game is a strategic puzzle where you fill a 10×10 grid with consecutive numbers 1-100, following specific movement rules (3 cells orthogonally or 2 cells diagonally).            **Built with Zig 0.14.1**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload status
+        if: always()
+        run: |
+          if [ "${{ steps.upload_release.outcome }}" == "success" ]; then
+            echo "🎉 Release upload completed successfully!"
+            echo "📱 View release: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          else
+            echo "❌ Release upload failed"
+            echo "Check the logs above for error details"
+            echo ""
+            echo "Common solutions for 403 errors:"
+            echo "1. Ensure repository has 'Actions' permissions enabled"
+            echo "2. Check if 'Allow GitHub Actions to create and approve pull requests' is enabled"
+            echo "3. Verify the GITHUB_TOKEN has sufficient permissions"
+            echo "4. Make sure the tag was pushed correctly"
+            exit 1
+          fi

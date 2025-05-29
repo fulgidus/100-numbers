@@ -1,0 +1,99 @@
+name: Debug Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name for testing"
+        required: true
+        default: "v0.0.0-test"
+
+permissions:
+  contents: write
+  actions: read
+  checks: read
+
+jobs:
+  debug-permissions:
+    name: Debug GitHub Permissions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check GitHub Token Permissions
+        run: |
+          echo "🔍 Checking GitHub token permissions..."
+
+          # Check if we can read repository information
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               "https://api.github.com/repos/${{ github.repository }}" \
+               -s -o /tmp/repo_info.json
+
+          if [ $? -eq 0 ]; then
+            echo "✅ Can read repository information"
+            echo "Repository: $(jq -r '.full_name' /tmp/repo_info.json)"
+            echo "Default branch: $(jq -r '.default_branch' /tmp/repo_info.json)"
+          else
+            echo "❌ Cannot read repository information"
+          fi
+
+          # Check if we can list releases
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               "https://api.github.com/repos/${{ github.repository }}/releases" \
+               -s -o /tmp/releases.json
+
+          if [ $? -eq 0 ]; then
+            echo "✅ Can list releases"
+            echo "Number of existing releases: $(jq '. | length' /tmp/releases.json)"
+          else
+            echo "❌ Cannot list releases"
+          fi
+
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.1
+
+      - name: Build minimal test binary
+        run: |
+          echo "🔨 Building minimal test binary..."
+          zig build -Doptimize=ReleaseFast
+
+          # Create a simple test file
+          mkdir -p test-release
+          cp zig-out/bin/100 test-release/100-numbers-test || cp zig-out/bin/100.exe test-release/100-numbers-test.exe
+
+          echo "Test file for release" > test-release/README.txt
+
+          echo "📦 Test files created:"
+          ls -la test-release/
+
+      - name: Test Release Creation
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag_name }}
+          name: "Test Release ${{ github.event.inputs.tag_name }}"
+          body: |
+            🧪 **This is a test release for debugging purposes**
+
+            This release is created to test the GitHub Actions permissions and release workflow.
+            It should be deleted after testing.
+
+            Created: ${{ github.run_number }}
+          files: |
+            test-release/*
+          draft: true
+          prerelease: true
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup Test Release
+        if: always()
+        run: |
+          echo "🧹 Test completed. Manual cleanup may be required for the test release."
+          echo "Check: https://github.com/${{ github.repository }}/releases"

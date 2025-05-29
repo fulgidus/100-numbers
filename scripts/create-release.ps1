@@ -4,7 +4,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$Version,
-    
+
     [string]$Message = "",
     [switch]$DryRun = $false,
     [switch]$Force = $false
@@ -78,10 +78,10 @@ $changelogPath = "CHANGELOG.md"
 if (Test-Path $changelogPath) {
     $changelog = Get-Content $changelogPath -Raw
     $today = Get-Date -Format "yyyy-MM-dd"
-    
+
     # Replace [Unreleased] with the new version
     $newChangelog = $changelog -replace '\[Unreleased\]', "[$($Version.Substring(1))] - $today"
-    
+
     # Add new [Unreleased] section
     $unreleasedSection = @"
 ## [Unreleased]
@@ -95,9 +95,9 @@ if (Test-Path $changelogPath) {
 
 ## [$($Version.Substring(1))] - $today
 "@
-    
+
     $newChangelog = $newChangelog -replace "## \[$($Version.Substring(1))\] - $today", $unreleasedSection
-    
+
     if ($DryRun) {
         Write-Host "[DRY RUN] Would update CHANGELOG.md" -ForegroundColor Gray
     } else {
@@ -137,23 +137,23 @@ if ($DryRun) {
         git tag -d $Version
         git push origin --delete $Version 2>$null
     }
-    
+
     git add CHANGELOG.md 2>$null
     git commit -m "Prepare release $Version" 2>$null
-    
+
     git tag -a $Version -m $Message
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Failed to create git tag" -ForegroundColor Red
         exit 1
     }
-    
+
     Write-Host "Pushing tag to remote..." -ForegroundColor Yellow
     git push origin $Version
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Failed to push tag to remote" -ForegroundColor Red
         exit 1
     }
-    
+
     git push origin main 2>$null
 }
 

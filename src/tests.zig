@@ -236,7 +236,7 @@ test "Grid.playRandomGame - multiple games consistency" {
 }
 
 // ============================================================================
-// TEST PRIORITÀ ALTA #3: GESTIONE THREAD-SAFE
+// HIGH PRIORITY TESTS #3: THREAD-SAFE MANAGEMENT
 // ============================================================================
 
 test "SharedState.init - initial state" {
@@ -269,12 +269,12 @@ test "LocalStats.updateLocalScore - score tracking" {
     try expectEqual(@as(u64, 1), local_stats.games_played);
     try expectEqual(@as(u32, 50), local_stats.best_score);
 
-    // Punteggio più basso - non dovrebbe aggiornare il best
+    // Lower score - should not update the best
     local_stats.updateLocalScore(30, &grid);
     try expectEqual(@as(u64, 2), local_stats.games_played);
     try expectEqual(@as(u32, 50), local_stats.best_score);
 
-    // Punteggio più alto - dovrebbe aggiornare il best
+    // Higher score - should update the best
     local_stats.updateLocalScore(75, &grid);
     try expectEqual(@as(u64, 3), local_stats.games_played);
     try expectEqual(@as(u32, 75), local_stats.best_score);
@@ -308,7 +308,7 @@ test "LocalStats.shouldFlush - batching logic" {
 }
 
 // ============================================================================
-// TEST PRIORITÀ ALTA #4: GESTIONE MEMORIA E ROBUSTEZZA
+// HIGH PRIORITY TESTS #4: MEMORY MANAGEMENT AND ROBUSTNESS
 // ============================================================================
 
 test "Grid.hash - consistency and uniqueness" {
@@ -440,7 +440,7 @@ test "LocalStats - solution storage under memory pressure" {
 }
 
 // ============================================================================
-// TEST PRIORITÀ MEDIA #1: TRASFORMAZIONI GRIGLIA
+// MEDIUM PRIORITY TESTS #1: GRID TRANSFORMATIONS
 // ============================================================================
 
 test "Grid.flip - horizontal transformation correctness" {
@@ -558,7 +558,7 @@ test "Grid transformations - combined operations" {
 }
 
 // ============================================================================
-// TEST PRIORITÀ MEDIA #2: FUNZIONI HASH E FILE I/O
+// MEDIUM PRIORITY TESTS #2: HASH FUNCTIONS AND FILE I/O
 // ============================================================================
 
 test "Grid.hash - deterministic and consistent" {
@@ -640,7 +640,7 @@ test "Grid.hash - collision resistance" {
                 grid.fillCell(col, @as(i32, @intCast(y)));
             }
         }
-        // Strategia 4: Pattern pseudo-casuali con diversità garantita (seed 75-99)
+        // Strategy 4: Pseudo-random patterns with guaranteed diversity (seed 75-99)
         else {
             const num_cells = (seed - 75) % 15 + 1; // 1-15 celle
             for (0..num_cells) |i| {
@@ -654,7 +654,7 @@ test "Grid.hash - collision resistance" {
 
         const hash = grid.hash();
 
-        // Verifica che questo hash non sia già stato visto
+        // Verify that this hash has not been seen before
         for (hashes.items) |existing_hash| {
             if (hash == existing_hash) {
                 collision_count += 1;
@@ -663,13 +663,13 @@ test "Grid.hash - collision resistance" {
         }
 
         try hashes.append(hash);
-    } // Con pattern diversificati, accettiamo un tasso di collisioni realistico
-    // 20-25% di collisioni possono essere normali per pattern di griglia che
-    // condividono strutture simili (es. righe, colonne, diagonali)
+    } // With diversified patterns, we accept a realistic collision rate
+    // 20-25% collisions may be normal for grid patterns that
+    // share similar structures (e.g., rows, columns, diagonals)
     try expect(collision_count <= 25);
 
-    // Verifica che abbiamo generato almeno 75 hash unici (75% di successo)
-    // che è ragionevole per questo tipo di test
+    // Verify that we generated at least 75 unique hashes (75% success)
+    // which is reasonable for this type of test
     try expect(hashes.items.len >= 75);
 }
 
@@ -722,7 +722,7 @@ test "Grid.saveSolutionToFile - error handling mock" {
 }
 
 // ============================================================================
-// TEST PRIORITÀ MEDIA #3: GESTIONE SOLUZIONI E PERFORMANCE
+// MEDIUM PRIORITY TESTS #3: SOLUTION MANAGEMENT AND PERFORMANCE
 // ============================================================================
 
 test "SharedState.updateScore - solution scoring mock" {
@@ -743,7 +743,7 @@ test "SharedState.updateScore - solution scoring mock" {
     try expectEqual(@as(u64, 1), stats.games_played);
     try expectEqual(@as(u64, 0), stats.solutions_found); // Nessuna soluzione perfetta
 
-    // Test con punteggio più alto ma ancora non perfetto
+    // Test with higher score but still not perfect
     shared_state.updateScore(75, &grid);
 
     const stats2 = shared_state.getStats();
@@ -829,7 +829,7 @@ test "Performance monitoring - statistics calculation accuracy" {
 }
 
 // ============================================================================
-// TEST PRIORITÀ MEDIA #4: EDGE CASES E STRESS TESTING
+// MEDIUM PRIORITY TESTS #4: EDGE CASES AND STRESS TESTING
 // ============================================================================
 
 test "Grid transformations - empty grid edge case" {
@@ -961,7 +961,7 @@ test "Perfect solution mock - avoids automatic file saving" {
 test "Solution data integrity mock" {
     var grid = Grid.init();
 
-    // Pattern di test per verifica integrità - usando coordinate (x,y) corrette
+    // Test pattern for integrity verification - using correct (x,y) coordinates
     const test_pattern = [_]struct { x: i32, y: i32 }{ .{ .x = 0, .y = 0 }, .{ .x = 9, .y = 0 }, .{ .x = 5, .y = 5 }, .{ .x = 0, .y = 9 }, .{ .x = 9, .y = 9 } };
 
     for (test_pattern, 0..) |pos, i| {
