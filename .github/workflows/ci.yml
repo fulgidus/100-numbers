@@ -8,6 +8,13 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+  actions: write
+  checks: write
+  issues: write
+  pull-requests: write
+
 jobs:
   test:
     name: Test on ${{ matrix.os }}
@@ -142,7 +149,7 @@ jobs:
 
             - **Windows (x64)**: `100-numbers-windows-x86_64.zip`
             - **Linux (x64)**: `100-numbers-linux-x86_64.tar.gz`
-            - **Linux (ARM64)**: `100-numbers-linux-aarch64.tar.gz`  
+            - **Linux (ARM64)**: `100-numbers-linux-aarch64.tar.gz`
             - **macOS (Intel)**: `100-numbers-macos-x86_64.tar.gz`
             - **macOS (Apple Silicon)**: `100-numbers-macos-aarch64.tar.gz`
 
