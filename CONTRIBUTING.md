@@ -23,7 +23,7 @@ This is a high-performance multithreaded solver for the 100 Numbers Game, writte
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/aless/100-numbers.git
+   git clone https://github.com/fulgidus/100-numbers.git
    cd 100-numbers
    ```
 

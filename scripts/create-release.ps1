@@ -167,10 +167,10 @@ Write-Host "  4. Generate release notes" -ForegroundColor White
 
 Write-Host ""
 Write-Host "Monitor the release process at:" -ForegroundColor Yellow
-Write-Host "https://github.com/aless/100-numbers/actions" -ForegroundColor White
+Write-Host "https://github.com/fulgidus/100-numbers/actions" -ForegroundColor White
 
 if (-not $DryRun) {
     Write-Host ""
     Write-Host "The release will be available at:" -ForegroundColor Yellow
-    Write-Host "https://github.com/aless/100-numbers/releases/tag/$Version" -ForegroundColor White
+    Write-Host "https://github.com/fulgidus/100-numbers/releases/tag/$Version" -ForegroundColor White
 }

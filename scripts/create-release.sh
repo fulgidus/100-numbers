@@ -211,10 +211,10 @@ echo -e "  ${NC}4. Generate release notes${NC}"
 
 echo ""
 echo -e "${YELLOW}Monitor the release process at:${NC}"
-echo -e "https://github.com/aless/100-numbers/actions"
+echo -e "https://github.com/fulgidus/100-numbers/actions"
 
 if [ "$DRY_RUN" = false ]; then
     echo ""
     echo -e "${YELLOW}The release will be available at:${NC}"
-    echo -e "https://github.com/aless/100-numbers/releases/tag/$VERSION"
+    echo -e "https://github.com/fulgidus/100-numbers/releases/tag/$VERSION"
 fi

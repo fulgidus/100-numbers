@@ -3,8 +3,8 @@
 
 A high-performance multithreaded solver for the "100 Numbers Game" written in Zig, capable of finding perfect solutions to this challenging mathematical puzzle. **Now featuring advanced cyclic solution detection and comprehensive variant generation!**
 
-<!-- [![CI/CD Pipeline](https://github.com/aless/100-numbers/actions/workflows/ci.yml/badge.svg)](https://github.com/aless/100-numbers/actions/workflows/ci.yml)
-[![Release](https://github.com/aless/100-numbers/actions/workflows/release.yml/badge.svg)](https://github.com/aless/100-numbers/actions/workflows/release.yml) -->
+<!-- [![CI/CD Pipeline](https://github.com/fulgidus/100-numbers/actions/workflows/ci.yml/badge.svg)](https://github.com/fulgidus/100-numbers/actions/workflows/ci.yml)
+[![Release](https://github.com/fulgidus/100-numbers/actions/workflows/release.yml/badge.svg)](https://github.com/fulgidus/100-numbers/actions/workflows/release.yml) -->
 [![Zig](https://img.shields.io/badge/Zig-0.14.1-orange.svg)](https://ziglang.org/download/)
 [![License](https://img.shields.io/badge/GPL-3.0-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 
@@ -211,10 +211,10 @@ A **cyclic solution** is a perfect 100-cell solution where the final position ca
 - **Variant Explosion**: Cyclic solutions generate 400 unique variants instead of 4
 
 ### Variant Generation
-| Solution Type | Variants Generated | Description |
-| ------------- | ------------------ | ----------- |
+| Solution Type | Variants Generated | Description                                              |
+| ------------- | ------------------ | -------------------------------------------------------- |
 | **Regular**   | 4                  | Basic orientations (original, flip, invert, flip+invert) |
-| **🔄 Cyclic** | **400**            | **100 cyclic shifts × 4 orientations each** |
+| **🔄 Cyclic**  | **400**            | **100 cyclic shifts × 4 orientations each**              |
 
 ### Example Output
 ```
