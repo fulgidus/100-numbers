@@ -85,7 +85,7 @@ jobs:
           cp zig-out/bin/100* artifacts/${{ matrix.target.artifact-name }} || cp zig-out/bin/100.exe artifacts/${{ matrix.target.artifact-name }} || true
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.target.artifact-name }}
           path: artifacts/${{ matrix.target.artifact-name }}
